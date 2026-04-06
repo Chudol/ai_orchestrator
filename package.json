@@ -1,0 +1,46 @@
+{
+  "name": "orchestrator",
+  "version": "0.1.0",
+  "description": "Electron app for managing multiple Claude Code sessions",
+  "main": "./out/main/index.js",
+  "scripts": {
+    "dev": "electron-vite dev",
+    "build": "electron-vite build",
+    "preview": "electron-vite preview",
+    "package": "electron-builder --config electron-builder.yml"
+  },
+  "dependencies": {
+    "@monaco-editor/react": "^4.7.0",
+    "@xterm/addon-fit": "^0.10.0",
+    "@xterm/xterm": "^5.5.0",
+    "electron-store": "^8.2.0",
+    "monaco-editor": "^0.55.1",
+    "node-pty": "^1.0.0",
+    "uuid": "^11.1.0"
+  },
+  "devDependencies": {
+    "@electron/rebuild": "^3.7.1",
+    "@types/react": "^18.3.18",
+    "@types/react-dom": "^18.3.5",
+    "@types/uuid": "^10.0.0",
+    "autoprefixer": "^10.4.21",
+    "electron": "^35.1.2",
+    "electron-builder": "^25.1.8",
+    "electron-vite": "^3.1.0",
+    "postcss": "^8.5.3",
+    "react": "^18.3.1",
+    "react-dom": "^18.3.1",
+    "tailwindcss": "^3.4.17",
+    "typescript": "^5.8.3",
+    "vite": "^6.3.1",
+    "zustand": "^5.0.5"
+  },
+  "pnpm": {
+    "onlyBuiltDependencies": [
+      "electron",
+      "esbuild",
+      "node-pty"
+    ],
+    "ignoredBuiltDependencies": []
+  }
+}
