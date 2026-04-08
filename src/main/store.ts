@@ -1,11 +1,13 @@
 import Store from 'electron-store';
-import { Project, Session, StoreSchema } from '@shared/types';
+import { Project, Session, Command, StoreSchema } from '@shared/types';
 import { v4 as uuidv4 } from 'uuid';
 
 const store = new Store<StoreSchema>({
   defaults: {
     projects: [],
     sessions: [],
+    commands: [],
+    trackedRepoPaths: {},
   },
 });
 
@@ -31,6 +33,11 @@ export const removeProject = (id: string): void => {
   store.set('projects', projects);
   const sessions = getSessions().filter((s) => s.projectId !== id);
   store.set('sessions', sessions);
+  const commands = getCommands().filter((c) => c.projectId !== id);
+  store.set('commands', commands);
+  const tracked = store.get('trackedRepoPaths') ?? {};
+  delete tracked[id];
+  store.set('trackedRepoPaths', tracked);
 };
 
 export const getSessions = (): Session[] => {
@@ -77,6 +84,25 @@ export const updateSessionClaudeId = (id: string, claudeSessionId: string): void
   store.set('sessions', sessions);
 };
 
+export const getTrackedRepoPaths = (projectId: string): string[] => {
+  const all = store.get('trackedRepoPaths') ?? {};
+  return all[projectId] ?? [];
+};
+
+export const trackRepo = (projectId: string, dirPath: string): void => {
+  const all = store.get('trackedRepoPaths') ?? {};
+  const existing = all[projectId] ?? [];
+  if (!existing.includes(dirPath)) {
+    store.set('trackedRepoPaths', { ...all, [projectId]: [...existing, dirPath] });
+  }
+};
+
+export const untrackRepo = (projectId: string, dirPath: string): void => {
+  const all = store.get('trackedRepoPaths') ?? {};
+  const existing = all[projectId] ?? [];
+  store.set('trackedRepoPaths', { ...all, [projectId]: existing.filter((p) => p !== dirPath) });
+};
+
 export const removeSession = (id: string): void => {
   const sessions = getSessions().filter((s) => s.id !== id);
   store.set('sessions', sessions);
@@ -90,4 +116,63 @@ export const resetAllSessionStatuses = (): void => {
 export const removeSessionsByProject = (projectId: string): void => {
   const sessions = getSessions().filter((s) => s.projectId !== projectId);
   store.set('sessions', sessions);
+};
+
+// Commands CRUD
+
+export const getCommands = (): Command[] => {
+  return store.get('commands');
+};
+
+export const getCommandsByProject = (projectId: string): Command[] => {
+  return getCommands()
+    .filter((c) => c.projectId === projectId)
+    .sort((a, b) => a.order - b.order);
+};
+
+export const addCommand = (projectId: string, name: string, command: string): Command => {
+  const existing = getCommandsByProject(projectId);
+  const maxOrder = existing.length > 0 ? Math.max(...existing.map((c) => c.order)) : -1;
+  const cmd: Command = {
+    id: uuidv4(),
+    projectId,
+    name,
+    command,
+    order: maxOrder + 1,
+    createdAt: Date.now(),
+  };
+  const commands = getCommands();
+  commands.push(cmd);
+  store.set('commands', commands);
+  return cmd;
+};
+
+export const updateCommand = (id: string, data: { name?: string; command?: string }): Command => {
+  let updated: Command | null = null;
+  const commands = getCommands().map((c) => {
+    if (c.id === id) {
+      updated = { ...c, ...data };
+      return updated;
+    }
+    return c;
+  });
+  store.set('commands', commands);
+  if (!updated) throw new Error(`Command ${id} not found`);
+  return updated;
+};
+
+export const removeCommand = (id: string): void => {
+  const commands = getCommands().filter((c) => c.id !== id);
+  store.set('commands', commands);
+};
+
+export const reorderCommands = (projectId: string, orderedIds: string[]): void => {
+  const commands = getCommands().map((c) => {
+    if (c.projectId === projectId) {
+      const idx = orderedIds.indexOf(c.id);
+      return { ...c, order: idx >= 0 ? idx : c.order };
+    }
+    return c;
+  });
+  store.set('commands', commands);
 };

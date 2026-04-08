@@ -7,11 +7,13 @@ interface ProjectItemProps {
   project: Project;
   sessions: Session[];
   activeSessionId: string | null;
+  hideStopped: boolean;
 }
 
-export const ProjectItem = ({ project, sessions, activeSessionId }: ProjectItemProps): JSX.Element => {
+export const ProjectItem = ({ project, sessions, activeSessionId, hideStopped }: ProjectItemProps): JSX.Element => {
   const [isOpen, setIsOpen] = useState(true);
   const { createSession, removeProject } = useAppStore();
+  const filteredSessions = hideStopped ? sessions.filter((s) => s.status !== 'stopped') : sessions;
 
   const handleNewSession = async (e: React.MouseEvent): Promise<void> => {
     e.stopPropagation();
@@ -51,10 +53,10 @@ export const ProjectItem = ({ project, sessions, activeSessionId }: ProjectItemP
       </div>
       {isOpen && (
         <div className="ml-4">
-          {sessions.length === 0 ? (
+          {filteredSessions.length === 0 ? (
             <div className="text-xs text-gray-500 px-3 py-1">No sessions</div>
           ) : (
-            sessions.map((session) => (
+            filteredSessions.map((session) => (
               <SessionItem
                 key={session.id}
                 session={session}

@@ -5,7 +5,6 @@ import { BrowserWindow, app } from 'electron';
 import { IPC_CHANNELS } from '@shared/channels';
 import { SessionInternalState, SessionStateInfo } from '@shared/types';
 import { updateSessionStatus, updateSessionClaudeId } from './store';
-import * as os from 'os';
 
 // Debug: log raw PTY output to file per session
 const DEBUG_PTY = true;
@@ -22,25 +21,66 @@ const deleteDebugLog = (sessionName: string): void => {
   } catch { /* ignore if doesn't exist */ }
 };
 
+import * as os from 'os';
+
 const CLAUDE_SESSIONS_DIR = path.join(os.homedir(), '.claude', 'sessions');
 
-const findClaudeSessionId = (pid: number, sessionId: string): void => {
-  // Claude Code writes session files as ~/.claude/sessions/{PID}.json
-  // Poll for it since it takes a moment after spawn
+// Regex to detect "claude --resume {ID}" in terminal output (UUID or slug)
+const RESUME_ID_REGEX = /claude --resume ([\w-]+)/;
+
+// Try to find claude session ID by name from ~/.claude/sessions/
+const findClaudeSessionByName = (name: string, cwd: string): string | null => {
+  try {
+    const files = fs.readdirSync(CLAUDE_SESSIONS_DIR);
+    let best: { id: string; startedAt: number } | null = null;
+    for (const file of files) {
+      if (!file.endsWith('.json')) continue;
+      try {
+        const data = JSON.parse(fs.readFileSync(path.join(CLAUDE_SESSIONS_DIR, file), 'utf-8'));
+        if (data.name === name && data.cwd === cwd && data.sessionId) {
+          if (!best || data.startedAt > best.startedAt) {
+            best = { id: data.name || data.sessionId, startedAt: data.startedAt };
+          }
+        }
+      } catch { /* skip */ }
+    }
+    return best?.id ?? null;
+  } catch {
+    return null;
+  }
+};
+
+// Find claude session ID by scanning ~/.claude/sessions/ for newest match by cwd
+const findClaudeSessionByCwd = (cwd: string, sessionId: string, startedAfter: number): void => {
   let attempts = 0;
   const interval = setInterval(() => {
     attempts++;
-    const sessionFile = path.join(CLAUDE_SESSIONS_DIR, `${pid}.json`);
     try {
-      const data = JSON.parse(fs.readFileSync(sessionFile, 'utf-8'));
-      if (data.sessionId) {
-        updateSessionClaudeId(sessionId, data.sessionId);
+      const files = fs.readdirSync(CLAUDE_SESSIONS_DIR);
+      let best: { claudeId: string; startedAt: number } | null = null;
+      for (const file of files) {
+        if (!file.endsWith('.json')) continue;
+        try {
+          const data = JSON.parse(fs.readFileSync(path.join(CLAUDE_SESSIONS_DIR, file), 'utf-8'));
+          if (data.cwd === cwd && data.startedAt >= startedAfter && data.sessionId) {
+            if (!best || data.startedAt > best.startedAt) {
+              // Use name for resume if available (works as resume ID), otherwise UUID
+              const resumeId = data.name || data.sessionId;
+              best = { claudeId: resumeId, startedAt: data.startedAt };
+            }
+          }
+        } catch { /* skip */ }
+      }
+      if (best) {
+        updateSessionClaudeId(sessionId, best.claudeId);
+        for (const win of BrowserWindow.getAllWindows()) {
+          win.webContents.send(IPC_CHANNELS.SESSIONS_CLAUDE_ID, sessionId, best.claudeId);
+        }
         clearInterval(interval);
       }
-    } catch {
-      if (attempts > 30) clearInterval(interval); // give up after 30s
-    }
-  }, 1000);
+    } catch { /* ignore */ }
+    if (attempts > 30) clearInterval(interval);
+  }, 2000);
 };
 
 const MAX_BUFFER_LINES = 10000;
@@ -54,9 +94,14 @@ interface ManagedSession {
   stateSince: number;
   windowTitle: string;
   doneAt: number;
+  lastDetectedClaudeId: string;
 }
 
 const activeSessions = new Map<string, ManagedSession>();
+
+const stripAnsi = (str: string): string => {
+  return str.replace(/\x1b\[[0-9;]*[A-Za-z]/g, '').replace(/\x1b\][^\x07]*(\x07|\x1b\\)/g, '');
+};
 
 const detectStateFromTitle = (title: string): SessionInternalState => {
   // Claude Code sets window title to indicate state:
@@ -102,7 +147,9 @@ export const createPtySession = (
     }
   }
   const shell = process.platform === 'win32' ? 'cmd.exe' : '/bin/zsh';
-  const claudeCmd = claudeSessionId ? `claude --resume ${claudeSessionId}` : 'claude';
+  const claudeCmd = claudeSessionId
+    ? `claude --resume ${claudeSessionId} || claude`
+    : 'claude';
   const shellArgs = process.platform === 'win32' ? ['/c', claudeCmd] : ['-l', '-c', claudeCmd];
   const ptyProcess = pty.spawn(shell, shellArgs, {
     name: 'xterm-256color',
@@ -126,6 +173,7 @@ export const createPtySession = (
     stateSince: Date.now(),
     windowTitle: '',
     doneAt: 0,
+    lastDetectedClaudeId: claudeSessionId ?? '',
   };
 
   let outputBuffer = '';
@@ -170,10 +218,58 @@ export const createPtySession = (
         managed.doneAt = 0;
       }
 
+      // When teammates are running, only working/needs_approval from OSC should override
+      if (managed.currentState === 'teammates_running' && newState !== 'working' && newState !== 'waiting_for_approval') {
+        newState = 'teammates_running';
+      }
+
       if (newState !== managed.currentState) {
         managed.currentState = newState;
         managed.stateSince = Date.now();
         broadcastState(sessionId, { state: newState, since: managed.stateSince });
+      }
+    }
+
+    // Detect session change from window title (e.g. after /resume inside Claude Code)
+    // Spinner titles like "✳ local-online-game-modes" contain the session name
+    if (titleMatches) {
+      const lastTitle = titleMatches[titleMatches.length - 1].replace(/\x1b\]0;/, '');
+      // Extract potential session name from spinner title (remove spinner prefix)
+      const titleClean = lastTitle.replace(/^[⠋⠙⠹⠸⠼⠴⠦⠧⠇⠏⠂⠐✳✶✻✽✢·●]\s*/, '');
+      if (titleClean && titleClean !== 'Claude Code' && !titleClean.includes(': ')) {
+        // This might be a session name - check if it differs from current claude ID
+        const currentClaudeId = managed.lastDetectedClaudeId;
+        if (titleClean !== currentClaudeId) {
+          // Verify by checking ~/.claude/sessions/ for a session with this name
+          const found = findClaudeSessionByName(titleClean, cwd);
+          if (found) {
+            managed.lastDetectedClaudeId = found;
+            updateSessionClaudeId(sessionId, found);
+            for (const win of BrowserWindow.getAllWindows()) {
+              win.webContents.send(IPC_CHANNELS.SESSIONS_CLAUDE_ID, sessionId, found);
+            }
+          }
+        }
+      }
+    }
+
+    // Content-based detection: "teammates running" appears in terminal content, not OSC title
+    const stripped = stripAnsi(processed);
+    if (stripped.includes('teammates running')) {
+      if (managed.currentState !== 'teammates_running') {
+        managed.currentState = 'teammates_running';
+        managed.stateSince = Date.now();
+        broadcastState(sessionId, { state: 'teammates_running', since: managed.stateSince });
+      }
+    }
+
+    // Parse claude session ID from "claude --resume {ID}" in output
+    const resumeMatch = stripAnsi(processed).match(RESUME_ID_REGEX);
+    if (resumeMatch) {
+      managed.lastDetectedClaudeId = resumeMatch[1];
+      updateSessionClaudeId(sessionId, resumeMatch[1]);
+      for (const win of BrowserWindow.getAllWindows()) {
+        win.webContents.send(IPC_CHANNELS.SESSIONS_CLAUDE_ID, sessionId, resumeMatch[1]);
       }
     }
 
@@ -205,9 +301,13 @@ export const createPtySession = (
 
   activeSessions.set(sessionId, managed);
 
-  // Discover claude session ID from PID for future resume
-  if (!claudeSessionId) {
-    findClaudeSessionId(ptyProcess.pid, sessionId);
+  // Detect claude session ID: broadcast known ID or find via cwd scan
+  if (claudeSessionId) {
+    for (const win of BrowserWindow.getAllWindows()) {
+      win.webContents.send(IPC_CHANNELS.SESSIONS_CLAUDE_ID, sessionId, claudeSessionId);
+    }
+  } else {
+    findClaudeSessionByCwd(cwd, sessionId, Date.now() - 5000);
   }
 };
 
@@ -217,6 +317,7 @@ export const stopSession = (sessionId: string): void => {
     managed.ptyProcess.kill();
     activeSessions.delete(sessionId);
     updateSessionStatus(sessionId, 'stopped');
+    updateSessionClaudeId(sessionId, '');
     broadcastState(sessionId, { state: 'stopped', since: Date.now() });
   }
 };

@@ -12,6 +12,7 @@ const stateConfig: Record<SessionInternalState, { label: string; color: string; 
   thinking: { label: 'Thinking', color: 'text-yellow-400', dot: 'bg-yellow-400 animate-pulse' },
   working: { label: 'Working', color: 'text-blue-400', dot: 'bg-blue-400' },
   waiting_for_approval: { label: 'Needs approval', color: 'text-orange-400', dot: 'bg-orange-400 animate-pulse' },
+  teammates_running: { label: 'Teammates', color: 'text-purple-400', dot: 'bg-purple-400 animate-pulse' },
   stopped: { label: 'Stopped', color: 'text-red-400', dot: 'bg-red-400' },
 };
 

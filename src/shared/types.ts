@@ -14,7 +14,31 @@ export interface Session {
   createdAt: number;
 }
 
-export type SessionInternalState = 'idle' | 'thinking' | 'working' | 'waiting_for_approval' | 'stopped';
+export interface TrackedRepoInfo {
+  path: string;
+  folderName: string;
+  branch: string | null;
+}
+
+export interface GitStatusResult {
+  dirty: boolean;
+  staged: number;
+  unstaged: number;
+  untracked: number;
+}
+
+export interface GitFetchResult {
+  success: boolean;
+  error?: string;
+}
+
+export interface GitPullResult {
+  success: boolean;
+  output: string;
+  error?: string;
+}
+
+export type SessionInternalState = 'idle' | 'thinking' | 'working' | 'waiting_for_approval' | 'teammates_running' | 'stopped';
 
 export interface SessionStateInfo {
   state: SessionInternalState;
@@ -33,9 +57,68 @@ export interface OpenFile {
   content: string;
 }
 
+export interface TerminalPane {
+  id: string; // pty process id
+}
+
+export interface OpenTerminal {
+  id: string; // tab id
+  name: string;
+  panes: TerminalPane[];
+}
+
+export const GLOBAL_PROJECT_ID = '__global__';
+
+export interface Command {
+  id: string;
+  projectId: string;
+  name: string;
+  command: string;
+  order: number;
+  createdAt: number;
+}
+
+export interface SkillInfo {
+  name: string;
+  description: string;
+  filePath: string;
+  isGlobal: boolean;
+}
+
+export interface AgentInfo {
+  name: string;
+  description: string;
+  model: string;
+  filePath: string;
+}
+
+export interface McpServerConfig {
+  name: string;
+  command: string;
+  args: string[];
+  env: Record<string, string>;
+}
+
+export interface McpToolInputProperty {
+  type: string;
+  description?: string;
+}
+
+export interface McpTool {
+  name: string;
+  description: string;
+  inputSchema: {
+    type: string;
+    properties: Record<string, McpToolInputProperty>;
+    required: string[];
+  };
+}
+
 export interface StoreSchema {
   projects: Project[];
   sessions: Session[];
+  commands: Command[];
+  trackedRepoPaths: Record<string, string[]>; // projectId -> paths
 }
 
 export interface ElectronApi {
@@ -53,7 +136,37 @@ export interface ElectronApi {
   onSessionOutput: (callback: (sessionId: string, data: string) => void) => () => void;
   onSessionExit: (callback: (sessionId: string) => void) => () => void;
   onSessionStateUpdate: (callback: (sessionId: string, info: SessionStateInfo) => void) => () => void;
+  onSessionClaudeId: (callback: (sessionId: string, claudeId: string) => void) => () => void;
   selectDirectory: () => Promise<string | null>;
   readDirectory: (dirPath: string) => Promise<FileEntry[]>;
+  readDirectoryRecursive: (dirPath: string) => Promise<FileEntry[]>;
   readFile: (filePath: string) => Promise<string>;
+  createTerminal: (cwd: string, cols?: number, rows?: number) => Promise<string>;
+  destroyTerminal: (terminalId: string) => Promise<void>;
+  terminalInput: (terminalId: string, data: string) => Promise<void>;
+  terminalResize: (terminalId: string, cols: number, rows: number) => Promise<void>;
+  attachTerminal: (terminalId: string) => Promise<string[]>;
+  detachTerminal: (terminalId: string) => Promise<void>;
+  onTerminalOutput: (callback: (terminalId: string, data: string) => void) => () => void;
+  onTerminalExit: (callback: (terminalId: string) => void) => () => void;
+  listCommands: (projectId: string) => Promise<Command[]>;
+  addCommand: (projectId: string, name: string, command: string) => Promise<Command>;
+  updateCommand: (id: string, data: { name?: string; command?: string }) => Promise<Command>;
+  removeCommand: (id: string) => Promise<void>;
+  reorderCommands: (projectId: string, orderedIds: string[]) => Promise<void>;
+  trackRepo: (projectId: string, dirPath: string) => Promise<void>;
+  untrackRepo: (projectId: string, dirPath: string) => Promise<void>;
+  getTrackedRepoPaths: (projectId: string) => Promise<string[]>;
+  getGitBranch: (dirPath: string) => Promise<string | null>;
+  getGitStatus: (dirPath: string) => Promise<GitStatusResult>;
+  getGitBranches: (dirPath: string) => Promise<string[]>;
+  gitCheckout: (dirPath: string, branch: string) => Promise<void>;
+  gitFetch: (dirPath: string) => Promise<GitFetchResult>;
+  gitPull: (dirPath: string) => Promise<GitPullResult>;
+  peonIsMuted: () => Promise<boolean>;
+  peonToggleMute: () => Promise<boolean>;
+  listSkills: (projectPath: string | null) => Promise<SkillInfo[]>;
+  listAgents: (projectPath: string | null) => Promise<AgentInfo[]>;
+  listMcpServers: (projectPath: string | null) => Promise<McpServerConfig[]>;
+  mcpListTools: (command: string, args: string[], env: Record<string, string>) => Promise<McpTool[]>;
 }

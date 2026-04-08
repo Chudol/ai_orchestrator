@@ -11,7 +11,20 @@ const TreeNode = ({ entry, depth }: TreeNodeProps): JSX.Element => {
   const [expanded, setExpanded] = useState(false);
   const [children, setChildren] = useState<FileEntry[]>([]);
   const [loaded, setLoaded] = useState(false);
-  const { openFile } = useAppStore();
+  const [contextMenu, setContextMenu] = useState<{ x: number; y: number } | null>(null);
+  const { openFile, trackRepo, untrackRepo } = useAppStore();
+  const isTracked = useAppStore((s) => {
+    if (!s.activeSessionId) return false;
+    const repos = s.trackedRepos.get(s.activeSessionId);
+    return repos?.some((r) => r.path === entry.path) ?? false;
+  });
+
+  useEffect(() => {
+    if (!contextMenu) return;
+    const close = (): void => setContextMenu(null);
+    document.addEventListener('click', close);
+    return () => document.removeEventListener('click', close);
+  }, [contextMenu]);
 
   const handleClick = async (): Promise<void> => {
     if (entry.isDirectory) {
@@ -26,12 +39,20 @@ const TreeNode = ({ entry, depth }: TreeNodeProps): JSX.Element => {
     }
   };
 
+  const handleContextMenu = (e: React.MouseEvent): void => {
+    if (!entry.isDirectory) return;
+    e.preventDefault();
+    e.stopPropagation();
+    setContextMenu({ x: e.clientX, y: e.clientY });
+  };
+
   return (
     <>
       <div
         className="flex items-center gap-1 px-2 py-0.5 cursor-pointer hover:bg-gray-800 text-sm text-gray-300 whitespace-nowrap"
         style={{ paddingLeft: `${depth * 16 + 8}px` }}
         onClick={handleClick}
+        onContextMenu={handleContextMenu}
       >
         {entry.isDirectory ? (
           <span className="text-gray-500 w-4 text-center text-xs">
@@ -47,6 +68,26 @@ const TreeNode = ({ entry, depth }: TreeNodeProps): JSX.Element => {
       {expanded && children.map((child) => (
         <TreeNode key={child.path} entry={child} depth={depth + 1} />
       ))}
+      {contextMenu && (
+        <div
+          className="fixed bg-gray-800 border border-gray-600 rounded shadow-lg py-1 z-50"
+          style={{ left: contextMenu.x, top: contextMenu.y }}
+        >
+          <button
+            className="w-full px-4 py-1.5 text-left text-sm text-gray-200 hover:bg-gray-700"
+            onClick={() => {
+              if (isTracked) {
+                untrackRepo(entry.path);
+              } else {
+                trackRepo(entry.path);
+              }
+              setContextMenu(null);
+            }}
+          >
+            {isTracked ? 'Untrack' : 'Track this repository'}
+          </button>
+        </div>
+      )}
     </>
   );
 };

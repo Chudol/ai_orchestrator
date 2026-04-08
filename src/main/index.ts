@@ -1,7 +1,8 @@
-import { app, BrowserWindow, shell } from 'electron';
+import { app, BrowserWindow, dialog, shell } from 'electron';
 import { join } from 'path';
 import { registerIpcHandlers } from './ipc';
 import { cleanupAllSessions } from './sessions';
+import { cleanupAllTerminals, getActiveTerminalCount } from './terminals';
 import { resetAllSessionStatuses } from './store';
 
 const createWindow = (): void => {
@@ -16,6 +17,34 @@ const createWindow = (): void => {
       preload: join(__dirname, '../preload/index.js'),
       sandbox: false,
     },
+  });
+
+  let forceQuit = false;
+
+  mainWindow.on('close', (e) => {
+    if (forceQuit) return;
+
+    const terminalCount = getActiveTerminalCount();
+    if (terminalCount === 0) return;
+
+    e.preventDefault();
+
+    const plural = terminalCount > 1 ? 'terminals' : 'terminal';
+    dialog.showMessageBox(mainWindow, {
+      type: 'warning',
+      buttons: ['Cancel', 'Quit'],
+      defaultId: 0,
+      cancelId: 0,
+      title: 'Active Terminals',
+      message: `You have ${terminalCount} active ${plural} running.`,
+      detail: 'All terminal processes will be killed if you quit. Are you sure?',
+    }).then(({ response }) => {
+      if (response === 1) {
+        cleanupAllTerminals();
+        forceQuit = true;
+        mainWindow.close();
+      }
+    });
   });
 
   mainWindow.on('ready-to-show', () => {
@@ -54,4 +83,5 @@ app.on('window-all-closed', () => {
 
 app.on('before-quit', () => {
   cleanupAllSessions();
+  cleanupAllTerminals();
 });
