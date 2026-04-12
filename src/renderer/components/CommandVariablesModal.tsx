@@ -27,22 +27,22 @@ const ModalContent = ({ pending }: { pending: PendingExecution }): JSX.Element =
   );
 
   return (
-    <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50" onClick={cancelExecution}>
+    <div className="fixed inset-0 modal-backdrop flex items-center justify-center z-50" onClick={cancelExecution}>
       <div
-        className="bg-gray-900 border border-gray-700 rounded-lg shadow-xl w-[420px] max-h-[80vh] flex flex-col"
+        className="modal-card rounded-2xl w-[440px] max-h-[80vh] flex flex-col"
         onClick={(e) => e.stopPropagation()}
       >
-        <div className="px-4 py-3 border-b border-gray-800">
-          <div className="text-sm text-white font-medium">Fill in variables</div>
-          <div className="text-[10px] text-gray-500 font-mono mt-1 truncate">{pending.commandTemplate}</div>
+        <div className="px-6 py-4 border-b border-border">
+          <div className="text-sm text-txt-1 font-semibold">Fill in variables</div>
+          <div className="text-[10px] text-txt-3 font-mono mt-1.5 truncate bg-surface-0/40 px-2 py-1 rounded">{pending.commandTemplate}</div>
         </div>
-        <div className="px-4 py-3 flex flex-col gap-2.5 overflow-y-auto">
+        <div className="px-6 py-5 flex flex-col gap-4 overflow-y-auto">
           {pending.variables.map((varName, i) => (
             <div key={varName}>
-              <label className="text-xs text-gray-400 mb-0.5 block">{varName}</label>
+              <label className="text-[11px] text-txt-3 font-medium mb-1.5 block uppercase tracking-wider">{varName}</label>
               <input
                 ref={i === 0 ? firstInputRef : undefined}
-                className="w-full bg-gray-800 text-white text-sm px-3 py-1.5 rounded outline-none focus:ring-1 focus:ring-blue-500 font-mono"
+                className="w-full text-txt-1 text-sm px-4 py-2.5 rounded-xl input-field font-mono"
                 value={values[varName]}
                 onChange={(e) => setValues((v) => ({ ...v, [varName]: e.target.value }))}
                 onKeyDown={handleKeyDown}
@@ -51,20 +51,20 @@ const ModalContent = ({ pending }: { pending: PendingExecution }): JSX.Element =
             </div>
           ))}
         </div>
-        <div className="px-4 py-2 border-t border-gray-800">
-          <div className="text-[10px] text-gray-500 font-mono truncate mb-2">{preview}</div>
-          <div className="flex justify-end gap-2">
+        <div className="px-6 py-4 border-t border-border">
+          <div className="text-[10px] text-txt-3 font-mono truncate mb-3 bg-surface-0/40 px-2 py-1 rounded">{preview}</div>
+          <div className="flex justify-end gap-2.5">
             <button
-              className="text-xs px-3 py-1 bg-gray-700 text-gray-300 rounded hover:bg-gray-600"
+              className="text-sm px-5 py-2 bg-surface-3/60 hover:bg-surface-4 border border-border text-txt-2 hover:text-txt-1 rounded-xl transition-all font-medium"
               onClick={cancelExecution}
             >
               Cancel
             </button>
             <button
-              className="text-xs px-3 py-1 bg-blue-600 text-white rounded hover:bg-blue-500"
+              className="btn-primary text-sm px-5 py-2 text-white rounded-xl font-semibold transition-all"
               onClick={handleSubmit}
             >
-              Run
+              Run Command
             </button>
           </div>
         </div>

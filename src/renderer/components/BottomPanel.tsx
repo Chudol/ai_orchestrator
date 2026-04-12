@@ -1,6 +1,7 @@
 import { loader } from '@monaco-editor/react';
 import * as monaco from 'monaco-editor';
 import Editor from '@monaco-editor/react';
+import { useCallback } from 'react';
 import { useAppStore, useActiveOpenFiles, useActiveFilePath, useActiveTerminals } from '../stores/appStore';
 import { TerminalTab } from './TerminalTab';
 
@@ -19,86 +20,118 @@ const getLanguage = (filename: string): string => {
 };
 
 export const BottomPanel = (): JSX.Element => {
-  const { closeFile, setActiveFile, closeTerminalTab, setActiveBottomTab, createTerminalTab, splitTerminal, closeTerminalPane } = useAppStore();
+  const { closeFile, setActiveFile, closeTerminalTab, setActiveBottomTab, createTerminalTab, splitTerminal, closeTerminalPane, updateFileContent, saveFile } = useAppStore();
   const openFiles = useActiveOpenFiles();
   const activeFilePath = useActiveFilePath();
   const terminals = useActiveTerminals();
   const activeBottomTab = useAppStore((s) => s.activeBottomTab);
 
   const activeFile = openFiles.find((f) => f.path === activeFilePath);
+
+  const handleEditorMount = useCallback(
+    (editor: monaco.editor.IStandaloneCodeEditor) => {
+      editor.addCommand(monaco.KeyMod.CtrlCmd | monaco.KeyCode.KeyS, () => {
+        const path = useAppStore.getState().activeBottomTab;
+        if (path?.type === 'file') {
+          saveFile(path.path);
+        }
+      });
+    },
+    [saveFile],
+  );
+
   const showFile = activeBottomTab?.type === 'file';
   const showTerminal = activeBottomTab?.type === 'terminal';
   const activeTerminalId = showTerminal ? activeBottomTab.id : null;
 
   return (
     <div className="flex flex-col flex-1 min-h-0">
-      <div className="flex items-center bg-gray-950 overflow-x-auto flex-shrink-0">
+      {/* Tab bar */}
+      <div className="flex items-center bg-surface-1/80 border-b border-border overflow-x-auto flex-shrink-0">
         {openFiles.map((file) => (
           <div
             key={`file-${file.path}`}
-            className={`flex items-center gap-1 px-3 py-1.5 text-xs cursor-pointer border-r border-gray-800 flex-shrink-0 ${
+            className={`group flex items-center gap-1.5 px-3 py-1.5 cursor-pointer border-r border-border-subtle/50 flex-shrink-0 transition-all ${
               showFile && activeFilePath === file.path
-                ? 'bg-gray-800 text-white'
-                : 'text-gray-400 hover:bg-gray-900'
+                ? 'tab-bottom-active text-txt-1'
+                : 'text-txt-3 hover:text-txt-2 hover:bg-surface-2/30'
             }`}
             onClick={() => {
               setActiveFile(file.path);
               setActiveBottomTab({ type: 'file', path: file.path });
             }}
           >
-            <span className="text-blue-400 text-[10px]">F</span>
-            <span className="truncate max-w-[120px]">{file.name}</span>
+            <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="text-accent-blue/70 flex-shrink-0">
+              <path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z" /><polyline points="14 2 14 8 20 8" />
+            </svg>
+            <span className="truncate max-w-[120px] text-[11px] font-medium">
+              {file.dirty ? `${file.name} \u2022` : file.name}
+            </span>
             <button
-              className="text-gray-500 hover:text-red-400 ml-1"
+              className="opacity-0 group-hover:opacity-100 text-txt-3 hover:text-red-400 ml-0.5 transition-all"
               onClick={(e) => {
                 e.stopPropagation();
                 closeFile(file.path);
               }}
             >
-              &#x2715;
+              <svg width="8" height="8" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3">
+                <line x1="18" y1="6" x2="6" y2="18" /><line x1="6" y1="6" x2="18" y2="18" />
+              </svg>
             </button>
           </div>
         ))}
         {terminals.map((term) => (
           <div
             key={`term-${term.id}`}
-            className={`flex items-center gap-1 px-3 py-1.5 text-xs cursor-pointer border-r border-gray-800 flex-shrink-0 ${
+            className={`group flex items-center gap-1.5 px-3 py-1.5 cursor-pointer border-r border-border-subtle/50 flex-shrink-0 transition-all ${
               showTerminal && activeTerminalId === term.id
-                ? 'bg-gray-800 text-white'
-                : 'text-gray-400 hover:bg-gray-900'
+                ? 'tab-bottom-active text-txt-1'
+                : 'text-txt-3 hover:text-txt-2 hover:bg-surface-2/30'
             }`}
             onClick={() => setActiveBottomTab({ type: 'terminal', id: term.id })}
           >
-            <span className="text-green-400 text-[10px]">T</span>
-            <span className="truncate max-w-[120px]">{term.name}</span>
+            <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="text-green-400/70 flex-shrink-0">
+              <polyline points="4 17 10 11 4 5" /><line x1="12" y1="19" x2="20" y2="19" />
+            </svg>
+            <span className="truncate max-w-[120px] text-[11px] font-medium">{term.name}</span>
             <button
-              className="text-gray-500 hover:text-red-400 ml-1"
+              className="opacity-0 group-hover:opacity-100 text-txt-3 hover:text-red-400 ml-0.5 transition-all"
               onClick={(e) => {
                 e.stopPropagation();
                 closeTerminalTab(term.id);
               }}
             >
-              &#x2715;
+              <svg width="8" height="8" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3">
+                <line x1="18" y1="6" x2="6" y2="18" /><line x1="6" y1="6" x2="18" y2="18" />
+              </svg>
             </button>
           </div>
         ))}
         <button
-          className="px-2 py-1.5 text-xs text-gray-500 hover:text-gray-300 flex-shrink-0"
+          className="px-2.5 py-1.5 text-[11px] text-txt-3 hover:text-accent-blue flex-shrink-0 transition-colors flex items-center gap-1"
           onClick={createTerminalTab}
           title="New terminal"
         >
-          + Term
+          <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
+            <line x1="12" y1="5" x2="12" y2="19" /><line x1="5" y1="12" x2="19" y2="12" />
+          </svg>
+          Term
         </button>
       </div>
-      <div className="flex-1 overflow-hidden">
+
+      {/* Content */}
+      <div className="flex-1 overflow-hidden bg-surface-0">
         {showFile && activeFile && (
           <Editor
             theme="vs-dark"
             language={getLanguage(activeFile.name)}
             value={activeFile.content}
             path={activeFile.path}
+            onChange={(value) => {
+              if (value !== undefined) updateFileContent(activeFile.path, value);
+            }}
+            onMount={handleEditorMount}
             options={{
-              readOnly: true,
               minimap: { enabled: false },
               fontSize: 13,
               fontFamily: 'Menlo, Monaco, "Courier New", monospace',
@@ -125,8 +158,8 @@ export const BottomPanel = (): JSX.Element => {
           );
         })()}
         {!showFile && !showTerminal && (
-          <div className="flex items-center justify-center h-full text-gray-500 text-sm">
-            No tab selected
+          <div className="flex items-center justify-center h-full text-txt-3 text-sm">
+            <span className="opacity-40">No tab selected</span>
           </div>
         )}
       </div>

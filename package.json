@@ -4,10 +4,14 @@
   "description": "Electron app for managing multiple Claude Code sessions",
   "main": "./out/main/index.js",
   "scripts": {
+    "postinstall": "electron-rebuild -f -w node-pty",
+    "rebuild": "electron-rebuild -f -w node-pty",
     "dev": "electron-vite dev",
     "build": "electron-vite build",
     "preview": "electron-vite preview",
-    "package": "electron-builder --config electron-builder.yml"
+    "demo": "DEMO_MODE=1 electron-vite dev",
+    "package": "dotenv -- electron-builder --config electron-builder.yml",
+    "prod": "electron-vite build && dotenv -- electron-builder --config electron-builder.yml"
   },
   "dependencies": {
     "@monaco-editor/react": "^4.7.0",
@@ -15,7 +19,7 @@
     "@xterm/xterm": "^5.5.0",
     "electron-store": "^8.2.0",
     "monaco-editor": "^0.55.1",
-    "node-pty": "^1.0.0",
+    "node-pty": "^1.1.0",
     "uuid": "^11.1.0"
   },
   "devDependencies": {
@@ -24,6 +28,7 @@
     "@types/react-dom": "^18.3.5",
     "@types/uuid": "^10.0.0",
     "autoprefixer": "^10.4.21",
+    "dotenv-cli": "^11.0.0",
     "electron": "^35.1.2",
     "electron-builder": "^25.1.8",
     "electron-vite": "^3.1.0",

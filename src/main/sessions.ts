@@ -129,7 +129,13 @@ const detectStateFromTitle = (title: string): SessionInternalState => {
   return 'idle';
 };
 
+let _suppressStateBroadcast = false;
+export const suppressStateBroadcast = (suppress: boolean): void => {
+  _suppressStateBroadcast = suppress;
+};
+
 const broadcastState = (sessionId: string, info: SessionStateInfo): void => {
+  if (_suppressStateBroadcast) return;
   for (const win of BrowserWindow.getAllWindows()) {
     win.webContents.send(IPC_CHANNELS.SESSIONS_STATE_UPDATE, sessionId, info);
   }

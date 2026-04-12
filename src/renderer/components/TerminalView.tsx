@@ -57,31 +57,39 @@ const RepoRow = ({ repo }: RepoRowProps): JSX.Element => {
       setBranchesOpen(false);
       refreshBranches();
     } catch {
-      // checkout failed (dirty tree etc.)
+      // checkout failed
     }
   };
 
   return (
     <div className="relative">
-      <div className="flex items-center gap-1.5">
+      <div className="flex items-center gap-1.5 text-[10px]">
         <button
-          className="text-gray-500 hover:text-yellow-400 transition-colors"
+          className="text-txt-3 hover:text-yellow-400 transition-colors p-0.5 rounded"
           onClick={handleCheckStatus}
           title="Check changes"
         >
-          {statusLoading ? '...' : '?'}
+          {statusLoading ? (
+            <span className="animate-pulse">...</span>
+          ) : (
+            <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
+              <circle cx="12" cy="12" r="10" /><line x1="12" y1="16" x2="12" y2="12" /><line x1="12" y1="8" x2="12.01" y2="8" />
+            </svg>
+          )}
         </button>
         <button
-          className="text-gray-500 hover:text-blue-400 transition-colors branch-dropdown"
+          className="text-txt-3 hover:text-accent-blue transition-colors p-0.5 rounded branch-dropdown"
           onClick={handleOpenBranches}
           title="Switch branch"
         >
-          &#8645;
+          <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
+            <circle cx="12" cy="12" r="3" /><line x1="3" y1="12" x2="9" y2="12" /><line x1="15" y1="12" x2="21" y2="12" />
+          </svg>
         </button>
-        <span className="text-gray-500">{repo.folderName}:</span>
-        <span className="text-gray-400">{repo.branch ?? '???'}</span>
+        <span className="text-txt-3/70">{repo.folderName}</span>
+        <span className="text-accent-blue font-mono font-medium">{repo.branch ?? '???'}</span>
         {status && (
-          <span className={status.dirty ? 'text-yellow-400' : 'text-green-400'}>
+          <span className={`font-mono ${status.dirty ? 'text-yellow-400' : 'text-green-400'}`}>
             {status.dirty
               ? `${status.staged}S ${status.unstaged}M ${status.untracked}U`
               : 'clean'}
@@ -89,12 +97,12 @@ const RepoRow = ({ repo }: RepoRowProps): JSX.Element => {
         )}
       </div>
       {branchesOpen && branches && (
-        <div className="branch-dropdown absolute left-0 top-full mt-0.5 bg-gray-800 border border-gray-600 rounded shadow-lg z-50 max-h-48 overflow-y-auto min-w-[140px]">
+        <div className="branch-dropdown absolute left-0 top-full mt-1 glass rounded-lg shadow-xl z-50 max-h-48 overflow-y-auto min-w-[140px]">
           {branches.map((b) => (
             <button
               key={b}
-              className={`block w-full text-left px-2 py-0.5 text-[10px] hover:bg-gray-700 ${
-                b === repo.branch ? 'text-blue-400' : 'text-gray-300'
+              className={`block w-full text-left px-3 py-1.5 text-[10px] hover:bg-surface-2/50 transition-colors ${
+                b === repo.branch ? 'text-accent-blue font-medium' : 'text-txt-2'
               }`}
               onClick={() => handleCheckout(b)}
             >
@@ -124,9 +132,28 @@ export const TerminalView = (): JSX.Element => {
       fontSize: 14,
       fontFamily: 'Menlo, Monaco, "Courier New", monospace',
       theme: {
-        background: '#1a1a2e',
-        foreground: '#e0e0e0',
-        cursor: '#e0e0e0',
+        background: '#080c16',
+        foreground: '#e6edf3',
+        cursor: '#58a6ff',
+        cursorAccent: '#080c16',
+        selectionBackground: 'rgba(88, 166, 255, 0.18)',
+        selectionForeground: '#ffffff',
+        black: '#1c2333',
+        red: '#ff7b72',
+        green: '#3fb950',
+        yellow: '#d29922',
+        blue: '#58a6ff',
+        magenta: '#bc8cff',
+        cyan: '#39c5cf',
+        white: '#b1bac4',
+        brightBlack: '#6e7681',
+        brightRed: '#ffa198',
+        brightGreen: '#56d364',
+        brightYellow: '#e3b341',
+        brightBlue: '#79c0ff',
+        brightMagenta: '#d2a8ff',
+        brightCyan: '#56d4dd',
+        brightWhite: '#e6edf3',
       },
     });
     const fitAddon = new FitAddon();
@@ -137,7 +164,6 @@ export const TerminalView = (): JSX.Element => {
 
     if (containerRef.current) {
       terminal.open(containerRef.current);
-      // Delay fit to let layout settle
       requestAnimationFrame(() => fitAddon.fit());
     }
 
@@ -148,14 +174,12 @@ export const TerminalView = (): JSX.Element => {
       const sessionId = prevSessionIdRef.current;
       if (!sessionId) return true;
 
-      // Shift+Enter -> newline (same as Option+Enter)
       if (event.key === 'Enter' && event.shiftKey) {
         customKeyHandled = true;
         window.api.sendInput(sessionId, '\x1b\r');
         return false;
       }
 
-      // Cmd+Backspace -> clear line (Ctrl+U)
       if (event.key === 'Backspace' && event.metaKey) {
         customKeyHandled = true;
         window.api.sendInput(sessionId, '\x15');
@@ -166,7 +190,6 @@ export const TerminalView = (): JSX.Element => {
     });
 
     terminal.onData((data) => {
-      // Skip if handled by custom key handler above
       if (customKeyHandled) {
         customKeyHandled = false;
         return;
@@ -219,7 +242,6 @@ export const TerminalView = (): JSX.Element => {
         terminal.write(chunk);
       }
       fitAddonRef.current?.fit();
-      // Multiple delays to ensure scroll sticks after xterm finishes rendering
       terminal.scrollToBottom();
       requestAnimationFrame(() => {
         terminal.scrollToBottom();
@@ -232,7 +254,6 @@ export const TerminalView = (): JSX.Element => {
 
     const unsubOutput = window.api.onSessionOutput((sessionId, data) => {
       if (sessionId === activeSessionId && !cancelled) {
-        // Auto-scroll if user is near bottom (within 5 rows)
         const isNearBottom = terminal.buffer.active.baseY + terminal.rows >= terminal.buffer.active.length - 5;
         terminal.write(data);
         if (isNearBottom) {
@@ -261,26 +282,28 @@ export const TerminalView = (): JSX.Element => {
   }, [activeSessionId, trackedRepos.length, refreshBranches]);
 
   return (
-    <div className="w-full h-full overflow-hidden relative bg-[#1a1a2e]">
+    <div className="w-full h-full overflow-hidden relative bg-[#080c16]">
       <div ref={containerRef} className={`w-full h-full p-2 ${!activeSessionId ? 'hidden' : ''}`} />
       {activeSessionId && (
-        <div className="absolute top-1 right-2 text-[10px] text-gray-500 font-mono z-10 flex flex-col items-end gap-1 pointer-events-auto">
+        <div className="absolute top-2 right-3 text-[10px] font-mono z-10 flex flex-col items-end gap-1.5 pointer-events-auto">
           <div className="flex items-center gap-1">
             {trackedRepos.length > 0 && (
               <button
-                className="bg-[#1a1a2e]/90 hover:bg-gray-700 px-1 rounded text-gray-500 hover:text-gray-300 transition-colors"
+                className="glass px-1.5 py-0.5 rounded text-txt-3 hover:text-txt-2 transition-colors"
                 onClick={() => setReposVisible(!reposVisible)}
                 title={reposVisible ? 'Hide repos' : 'Show repos'}
               >
-                {reposVisible ? '▾' : '▸'}
+                <svg width="8" height="8" viewBox="0 0 10 10" className={`transition-transform ${reposVisible ? 'rotate-90' : ''}`}>
+                  <path d="M3 1l5 4-5 4V1z" fill="currentColor" />
+                </svg>
               </button>
             )}
-            <div className="select-all bg-[#1a1a2e]/90 px-1 rounded">
+            <div className="glass select-all px-2 py-0.5 rounded-md text-txt-3">
               {claudeId ?? 'detecting...'}
             </div>
           </div>
           {reposVisible && trackedRepos.length > 0 && (
-            <div className="bg-[#1a1a2e]/90 px-1.5 py-1 rounded">
+            <div className="glass px-2.5 py-2 rounded-lg space-y-1.5">
               {trackedRepos.map((repo) => (
                 <RepoRow key={repo.path} repo={repo} />
               ))}
@@ -289,8 +312,11 @@ export const TerminalView = (): JSX.Element => {
         </div>
       )}
       {!activeSessionId && (
-        <div className="absolute inset-0 flex items-center justify-center text-gray-500">
-          <p>Select a session to start</p>
+        <div className="absolute inset-0 flex flex-col items-center justify-center text-txt-3">
+          <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="0.8" className="opacity-10 mb-4">
+            <polyline points="4 17 10 11 4 5" /><line x1="12" y1="19" x2="20" y2="19" />
+          </svg>
+          <p className="text-sm opacity-40">Select a session to start</p>
         </div>
       )}
     </div>

@@ -32,48 +32,65 @@ const CommandSection = ({ title, projectId, commands, defaultOpen = true }: Comm
   }, [handleAdd]);
 
   return (
-    <div className="border-b border-gray-800">
+    <div className="border-b border-border-subtle/50">
       <div
-        className="flex items-center justify-between px-3 py-1.5 cursor-pointer hover:bg-gray-800/50"
+        className="flex items-center justify-between px-3 py-2 cursor-pointer hover:bg-surface-2/30 transition-colors"
         onClick={() => setCollapsed((v) => !v)}
       >
-        <div className="flex items-center gap-1.5">
-          <span className={`text-[10px] text-gray-500 transition-transform ${collapsed ? '' : 'rotate-90'}`}>
-            &#9654;
-          </span>
-          <span className="text-xs text-gray-400 font-medium uppercase tracking-wider">{title}</span>
-          <span className="text-[10px] text-gray-600">{commands.length}</span>
+        <div className="flex items-center gap-2">
+          <svg
+            width="8"
+            height="8"
+            viewBox="0 0 10 10"
+            className={`text-txt-3 transition-transform duration-150 ${collapsed ? '' : 'rotate-90'}`}
+          >
+            <path d="M3 1l5 4-5 4V1z" fill="currentColor" />
+          </svg>
+          <span className="text-[10px] text-txt-3 font-bold uppercase tracking-[0.12em]">{title}</span>
+          <span className="text-[9px] font-bold bg-surface-3/60 text-txt-3 px-1.5 py-0.5 rounded-full">{commands.length}</span>
         </div>
         <button
-          className="text-gray-500 hover:text-gray-300 text-sm"
+          className="text-txt-3 hover:text-accent-blue transition-colors"
           onClick={(e) => { e.stopPropagation(); setAdding(true); setCollapsed(false); }}
           title="Add command"
         >
-          +
+          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
+            <line x1="12" y1="5" x2="12" y2="19" /><line x1="5" y1="12" x2="19" y2="12" />
+          </svg>
         </button>
       </div>
       {!collapsed && (
         <>
           {adding && (
-            <div className="px-3 py-2 border-t border-gray-800/50 bg-gray-800/30">
+            <div className="px-3 py-2.5 border-t border-border-subtle/30 bg-surface-1/30">
               <input
-                className="w-full bg-gray-800 text-white text-xs px-2 py-1 rounded mb-1 outline-none focus:ring-1 focus:ring-blue-500"
+                className="w-full text-txt-1 text-[11px] px-2.5 py-1.5 rounded-md mb-1.5 input-field"
                 value={newName}
                 onChange={(e) => setNewName(e.target.value)}
                 onKeyDown={handleKeyDown}
-                placeholder="Name"
+                placeholder="Command name"
                 autoFocus
               />
               <input
-                className="w-full bg-gray-800 text-white text-xs px-2 py-1 rounded mb-1.5 outline-none focus:ring-1 focus:ring-blue-500 font-mono"
+                className="w-full text-txt-1 text-[11px] px-2.5 py-1.5 rounded-md mb-2 input-field font-mono"
                 value={newCmd}
                 onChange={(e) => setNewCmd(e.target.value)}
                 onKeyDown={handleKeyDown}
-                placeholder="Command"
+                placeholder="Command to execute"
               />
-              <div className="flex gap-1">
-                <button className="text-[10px] px-2 py-0.5 bg-blue-600 text-white rounded hover:bg-blue-500" onClick={handleAdd}>Add</button>
-                <button className="text-[10px] px-2 py-0.5 bg-gray-700 text-gray-300 rounded hover:bg-gray-600" onClick={() => { setAdding(false); setNewName(''); setNewCmd(''); }}>Cancel</button>
+              <div className="flex gap-1.5">
+                <button
+                  className="btn-primary text-[10px] px-3 py-1 text-white rounded-md font-medium"
+                  onClick={handleAdd}
+                >
+                  Add
+                </button>
+                <button
+                  className="text-[10px] px-3 py-1 bg-surface-3/60 border border-border text-txt-2 rounded-md hover:bg-surface-4 transition-colors"
+                  onClick={() => { setAdding(false); setNewName(''); setNewCmd(''); }}
+                >
+                  Cancel
+                </button>
               </div>
             </div>
           )}
@@ -87,7 +104,7 @@ const CommandSection = ({ title, projectId, commands, defaultOpen = true }: Comm
             />
           ))}
           {commands.length === 0 && !adding && (
-            <div className="px-3 py-2 text-[10px] text-gray-600 text-center">No commands</div>
+            <div className="px-3 py-3 text-[10px] text-txt-3 text-center italic">No commands</div>
           )}
         </>
       )}
@@ -101,9 +118,9 @@ export const CommandsPanel = (): JSX.Element => {
   const projectId = useActiveProjectId();
 
   return (
-    <div className="w-[250px] bg-gray-900 border-r border-gray-800 flex flex-col overflow-hidden flex-shrink-0">
-      <div className="flex items-center px-3 py-2 border-b border-gray-800">
-        <span className="text-xs text-gray-400 font-medium uppercase tracking-wider">Commands</span>
+    <div className="w-[240px] panel-bg border-r border-border flex flex-col overflow-hidden flex-shrink-0">
+      <div className="flex items-center px-3 py-2.5 border-b border-border">
+        <span className="text-[10px] font-bold text-txt-3 uppercase tracking-[0.15em]">Commands</span>
       </div>
       <div className="flex-1 overflow-y-auto">
         <CommandSection

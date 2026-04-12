@@ -25,9 +25,26 @@ const TerminalPaneView = ({ paneId, onSplit, onClose, showClose }: TerminalPaneV
       fontSize: 13,
       fontFamily: 'Menlo, Monaco, "Courier New", monospace',
       theme: {
-        background: '#1e1e1e',
-        foreground: '#d4d4d4',
-        cursor: '#d4d4d4',
+        background: '#080c16',
+        foreground: '#e6edf3',
+        cursor: '#58a6ff',
+        selectionBackground: 'rgba(88, 166, 255, 0.2)',
+        black: '#1c2333',
+        red: '#ff7b72',
+        green: '#3fb950',
+        yellow: '#d29922',
+        blue: '#58a6ff',
+        magenta: '#bc8cff',
+        cyan: '#39c5cf',
+        white: '#b1bac4',
+        brightBlack: '#6e7681',
+        brightRed: '#ffa198',
+        brightGreen: '#56d364',
+        brightYellow: '#e3b341',
+        brightBlue: '#79c0ff',
+        brightMagenta: '#d2a8ff',
+        brightCyan: '#56d4dd',
+        brightWhite: '#e6edf3',
       },
     });
     const fitAddon = new FitAddon();
@@ -146,32 +163,38 @@ const TerminalPaneView = ({ paneId, onSplit, onClose, showClose }: TerminalPaneV
     >
       <div ref={containerRef} className="w-full h-full" />
       {isDragOver && (
-        <div className="absolute inset-0 bg-blue-500/20 border-2 border-blue-400 rounded pointer-events-none z-10 flex items-center justify-center">
-          <span className="text-blue-300 text-sm font-medium">Drop to execute</span>
+        <div className="absolute inset-0 bg-accent-blue/10 border-2 border-accent-blue/50 rounded pointer-events-none z-10 flex items-center justify-center">
+          <span className="text-accent-blue text-xs font-medium">Drop command here</span>
         </div>
       )}
       {contextMenu && (
         <div
-          className="fixed bg-gray-800 border border-gray-600 rounded shadow-lg py-1 z-50"
+          className="fixed glass rounded-xl shadow-xl py-1 z-50 min-w-[140px]"
           style={{ left: contextMenu.x, top: contextMenu.y }}
         >
           <button
-            className="w-full px-4 py-1.5 text-left text-sm text-gray-200 hover:bg-gray-700"
+            className="w-full px-4 py-2 text-left text-[12px] text-txt-1 hover:bg-surface-2/50 transition-colors flex items-center gap-2"
             onClick={() => {
               onSplit();
               setContextMenu(null);
             }}
           >
+            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="text-txt-3">
+              <rect x="3" y="3" width="18" height="18" rx="2" /><line x1="12" y1="3" x2="12" y2="21" />
+            </svg>
             Split Right
           </button>
           {showClose && (
             <button
-              className="w-full px-4 py-1.5 text-left text-sm text-gray-200 hover:bg-gray-700"
+              className="w-full px-4 py-2 text-left text-[12px] text-txt-1 hover:bg-surface-2/50 transition-colors flex items-center gap-2"
               onClick={() => {
                 onClose();
                 setContextMenu(null);
               }}
             >
+              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="text-txt-3">
+                <line x1="18" y1="6" x2="6" y2="18" /><line x1="6" y1="6" x2="18" y2="18" />
+              </svg>
               Close Pane
             </button>
           )}
@@ -211,7 +234,7 @@ const PaneDivider = ({ onDrag }: PaneDividerProps): JSX.Element => {
 
   return (
     <div
-      className="w-1 bg-gray-700 hover:bg-blue-500 cursor-col-resize flex-shrink-0 transition-colors"
+      className="w-[3px] bg-border cursor-col-resize flex-shrink-0 transition-all divider-v"
       onMouseDown={handleMouseDown}
     />
   );

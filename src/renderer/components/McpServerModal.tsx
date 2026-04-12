@@ -9,40 +9,45 @@ const ToolItem = ({ tool }: { tool: McpTool }): JSX.Element => {
   const propEntries = Object.entries(properties);
 
   return (
-    <div className="border-b border-gray-800/50 last:border-b-0">
+    <div className="section-card overflow-hidden">
       <div
-        className="flex items-center gap-2 px-3 py-2 cursor-pointer hover:bg-gray-800/30"
+        className="flex items-center gap-2.5 px-4 py-2.5 cursor-pointer hover:bg-surface-2/40 transition-colors"
         onClick={() => setExpanded((v) => !v)}
       >
-        <span className={`text-[10px] text-gray-500 transition-transform ${expanded ? 'rotate-90' : ''}`}>
-          &#9654;
-        </span>
-        <span className="text-xs text-gray-200 font-mono">{tool.name}</span>
+        <svg
+          width="8"
+          height="8"
+          viewBox="0 0 10 10"
+          className={`text-txt-3 transition-transform duration-150 flex-shrink-0 ${expanded ? 'rotate-90' : ''}`}
+        >
+          <path d="M3 1l5 4-5 4V1z" fill="currentColor" />
+        </svg>
+        <span className="text-[13px] text-accent-blue font-mono font-medium">{tool.name}</span>
       </div>
       {expanded && (
-        <div className="px-4 pb-3 space-y-2">
+        <div className="px-4 pb-3 space-y-2 border-t border-border-subtle/30">
           {tool.description && (
-            <div className="text-xs text-gray-400">{tool.description}</div>
+            <div className="text-[12px] text-txt-3 mt-2.5 leading-relaxed">{tool.description}</div>
           )}
           {propEntries.length > 0 && (
-            <div className="space-y-1">
-              <div className="text-[10px] text-gray-500 uppercase tracking-wider">Parameters</div>
+            <div className="space-y-2 mt-2">
+              <div className="text-[9px] text-txt-3 uppercase tracking-[0.15em] font-bold">Parameters</div>
               {propEntries.map(([name, prop]) => (
-                <div key={name} className="flex items-start gap-2 pl-2">
-                  <span className="text-xs font-mono text-blue-400">{name}</span>
-                  <span className="text-[10px] text-gray-600">{prop.type}</span>
+                <div key={name} className="flex items-start gap-2 pl-2 py-0.5">
+                  <span className="text-[11px] font-mono text-accent-blue font-medium">{name}</span>
+                  <span className="text-[10px] text-txt-3 bg-surface-3/40 px-1.5 py-0.5 rounded">{prop.type}</span>
                   {required.includes(name) && (
-                    <span className="text-[10px] text-red-400">required</span>
+                    <span className="text-[9px] text-red-400 font-medium">required</span>
                   )}
                   {prop.description && (
-                    <span className="text-[10px] text-gray-500 flex-1">{prop.description}</span>
+                    <span className="text-[10px] text-txt-3 flex-1">{prop.description}</span>
                   )}
                 </div>
               ))}
             </div>
           )}
           {propEntries.length === 0 && (
-            <div className="text-[10px] text-gray-600">No parameters</div>
+            <div className="text-[11px] text-txt-3 mt-2 italic">No parameters</div>
           )}
         </div>
       )}
@@ -98,39 +103,46 @@ export const McpServerModal = (): JSX.Element | null => {
 
   return (
     <div
-      className="fixed inset-0 z-50 flex items-center justify-center bg-black/60"
+      className="fixed inset-0 z-50 flex items-center justify-center modal-backdrop"
       onClick={handleBackdrop}
     >
-      <div className="bg-gray-900 border border-gray-700 rounded-lg w-[560px] max-h-[80vh] overflow-hidden flex flex-col shadow-xl">
-        <div className="flex items-center justify-between px-4 py-3 border-b border-gray-800">
-          <div className="flex items-center gap-2">
-            <span className="text-green-400 text-sm font-mono">mcp</span>
-            <span className="text-sm text-white font-medium">{selectedMcpServer.name}</span>
+      <div className="modal-card rounded-2xl w-[580px] max-h-[80vh] overflow-hidden flex flex-col">
+        {/* Header */}
+        <div className="flex items-center justify-between px-6 py-4 border-b border-border">
+          <div className="flex items-center gap-3">
+            <div className="w-8 h-8 rounded-lg bg-green-500/10 border border-green-500/15 flex items-center justify-center">
+              <span className="text-green-400 text-[10px] font-bold">MCP</span>
+            </div>
+            <span className="text-txt-1 font-semibold">{selectedMcpServer.name}</span>
           </div>
           <button
-            className="text-gray-500 hover:text-gray-300 text-lg leading-none"
+            className="text-txt-3 hover:text-txt-1 p-1 rounded-lg hover:bg-surface-3/50 transition-all"
             onClick={handleClose}
           >
-            &times;
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+              <line x1="18" y1="6" x2="6" y2="18" /><line x1="6" y1="6" x2="18" y2="18" />
+            </svg>
           </button>
         </div>
-        <div className="flex-1 overflow-y-auto p-4 space-y-4">
+
+        {/* Content */}
+        <div className="flex-1 overflow-y-auto p-6 space-y-5">
           <div>
-            <div className="text-[10px] text-gray-500 uppercase tracking-wider mb-1">Command</div>
-            <div className="bg-gray-800 rounded px-3 py-2 font-mono text-xs text-gray-300 break-all">
+            <div className="text-[9px] text-txt-3 uppercase tracking-[0.15em] font-bold mb-2">Command</div>
+            <div className="bg-surface-0/50 border border-border-subtle rounded-xl px-4 py-3 font-mono text-[12px] text-txt-2 break-all">
               {selectedMcpServer.command} {selectedMcpServer.args.join(' ')}
             </div>
           </div>
 
           {envEntries.length > 0 && (
             <div>
-              <div className="text-[10px] text-gray-500 uppercase tracking-wider mb-1">Environment</div>
-              <div className="bg-gray-800 rounded px-3 py-2 space-y-1">
+              <div className="text-[9px] text-txt-3 uppercase tracking-[0.15em] font-bold mb-2">Environment</div>
+              <div className="bg-surface-0/50 border border-border-subtle rounded-xl px-4 py-3 space-y-1.5">
                 {envEntries.map(([key, val]) => (
-                  <div key={key} className="font-mono text-xs">
-                    <span className="text-blue-400">{key}</span>
-                    <span className="text-gray-600">=</span>
-                    <span className="text-gray-300">{val.length > 40 ? val.slice(0, 40) + '...' : val}</span>
+                  <div key={key} className="font-mono text-[11px]">
+                    <span className="text-accent-blue">{key}</span>
+                    <span className="text-txt-3 mx-1">=</span>
+                    <span className="text-txt-2">{val.length > 40 ? val.slice(0, 40) + '...' : val}</span>
                   </div>
                 ))}
               </div>
@@ -138,29 +150,29 @@ export const McpServerModal = (): JSX.Element | null => {
           )}
 
           <div>
-            <div className="flex items-center justify-between mb-2">
-              <div className="text-[10px] text-gray-500 uppercase tracking-wider">
-                Tools {tools && <span className="text-gray-600">({tools.length})</span>}
+            <div className="flex items-center justify-between mb-3">
+              <div className="text-[9px] text-txt-3 uppercase tracking-[0.15em] font-bold">
+                Tools {tools && <span className="text-txt-3/60">({tools.length})</span>}
               </div>
               <button
-                className={`text-xs px-3 py-1 rounded transition-colors ${
+                className={`text-xs px-4 py-1.5 rounded-lg transition-all font-medium ${
                   loading
-                    ? 'bg-gray-700 text-gray-400 cursor-wait'
-                    : 'bg-blue-600 text-white hover:bg-blue-500'
+                    ? 'bg-surface-3 text-txt-3 cursor-wait'
+                    : 'btn-primary text-white'
                 }`}
                 onClick={handleListTools}
                 disabled={loading}
               >
-                {loading ? 'Connecting...' : tools ? 'Refresh Tools' : 'List Tools'}
+                {loading ? 'Connecting...' : tools ? 'Refresh' : 'List Tools'}
               </button>
             </div>
             {error && (
-              <div className="bg-red-900/30 border border-red-800 rounded px-3 py-2 text-xs text-red-300">
+              <div className="bg-red-500/8 border border-red-500/20 rounded-xl px-4 py-3 text-[12px] text-red-400">
                 {error}
               </div>
             )}
             {tools && tools.length > 0 && (
-              <div className="bg-gray-800 rounded overflow-hidden">
+              <div className="space-y-2">
                 {tools.map((tool) => (
                   <ToolItem key={tool.name} tool={tool} />
                 ))}

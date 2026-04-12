@@ -17,7 +17,6 @@ export const QuickOpen = ({ onClose }: QuickOpenProps): JSX.Element => {
   const projectPath = useActiveProjectPath();
   const { openFile } = useAppStore();
 
-  // Load all files on mount
   useEffect(() => {
     if (!projectPath) return;
     setLoading(true);
@@ -28,7 +27,6 @@ export const QuickOpen = ({ onClose }: QuickOpenProps): JSX.Element => {
     });
   }, [projectPath]);
 
-  // Filter on query change with debounce
   useEffect(() => {
     const timeout = setTimeout(() => {
       if (!query.trim()) {
@@ -47,7 +45,6 @@ export const QuickOpen = ({ onClose }: QuickOpenProps): JSX.Element => {
     return () => clearTimeout(timeout);
   }, [query, files]);
 
-  // Scroll selected item into view
   useEffect(() => {
     if (!listRef.current) return;
     const item = listRef.current.children[selectedIndex] as HTMLElement;
@@ -76,12 +73,10 @@ export const QuickOpen = ({ onClose }: QuickOpenProps): JSX.Element => {
     }
   }, [filtered, selectedIndex, handleSelect, onClose]);
 
-  // Focus input on mount
   useEffect(() => {
     inputRef.current?.focus();
   }, []);
 
-  // Close on click outside
   const backdropRef = useRef<HTMLDivElement>(null);
   const handleBackdropClick = useCallback((e: React.MouseEvent) => {
     if (e.target === backdropRef.current) {
@@ -92,42 +87,54 @@ export const QuickOpen = ({ onClose }: QuickOpenProps): JSX.Element => {
   return (
     <div
       ref={backdropRef}
-      className="fixed inset-0 z-50 flex justify-center pt-[15%]"
+      className="fixed inset-0 z-50 flex justify-center pt-[12%] modal-backdrop"
       onClick={handleBackdropClick}
     >
-      <div className="w-[600px] max-h-[400px] bg-gray-800 border border-gray-600 rounded-lg shadow-2xl flex flex-col overflow-hidden">
-        <div className="px-3 py-2 border-b border-gray-700">
+      <div className="modal-card rounded-2xl w-[520px] overflow-hidden flex flex-col max-h-[420px]">
+        {/* Search */}
+        <div className="px-5 py-3.5 border-b border-border flex items-center gap-3">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="text-txt-3 flex-shrink-0">
+            <circle cx="11" cy="11" r="8" /><line x1="21" y1="21" x2="16.65" y2="16.65" />
+          </svg>
           <input
             ref={inputRef}
-            className="w-full bg-transparent text-white text-sm outline-none placeholder-gray-500"
+            className="w-full bg-transparent text-txt-1 text-sm outline-none placeholder-txt-3"
             placeholder="Search files by name..."
             value={query}
             onChange={(e) => setQuery(e.target.value)}
             onKeyDown={handleKeyDown}
           />
         </div>
-        <div ref={listRef} className="flex-1 overflow-y-auto">
+
+        {/* Results */}
+        <div ref={listRef} className="flex-1 overflow-y-auto py-1">
           {loading ? (
-            <div className="px-3 py-4 text-gray-500 text-sm text-center">Loading files...</div>
+            <div className="px-5 py-6 text-txt-3 text-sm text-center animate-pulse">Indexing files...</div>
           ) : filtered.length === 0 ? (
-            <div className="px-3 py-4 text-gray-500 text-sm text-center">No files found</div>
+            <div className="px-5 py-6 text-txt-3 text-sm text-center">No files found</div>
           ) : (
             filtered.map((file, i) => {
               const parts = file.name.split('/');
               const fileName = parts.pop() ?? '';
               const dirPath = parts.join('/');
+              const isSelected = i === selectedIndex;
               return (
                 <div
                   key={file.path}
-                  className={`flex items-center gap-2 px-3 py-1.5 cursor-pointer text-sm ${
-                    i === selectedIndex ? 'bg-blue-600 text-white' : 'text-gray-300 hover:bg-gray-700'
+                  className={`flex items-center gap-2.5 px-5 py-2 cursor-pointer text-[13px] transition-all ${
+                    isSelected
+                      ? 'bg-gradient-to-r from-blue-600/15 to-purple-600/10 text-txt-1'
+                      : 'text-txt-2 hover:bg-surface-2/30'
                   }`}
                   onClick={() => handleSelect(file)}
                   onMouseEnter={() => setSelectedIndex(i)}
                 >
-                  <span className="text-white flex-shrink-0">{fileName}</span>
+                  <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" className={isSelected ? 'text-accent-blue' : 'text-txt-3/40'}>
+                    <path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z" /><polyline points="14 2 14 8 20 8" />
+                  </svg>
+                  <span className={`flex-shrink-0 font-medium ${isSelected ? 'text-accent-blue' : ''}`}>{fileName}</span>
                   {dirPath && (
-                    <span className={`text-xs truncate ${i === selectedIndex ? 'text-blue-200' : 'text-gray-500'}`}>
+                    <span className={`text-[11px] truncate ${isSelected ? 'text-txt-3' : 'text-txt-3/60'}`}>
                       {dirPath}
                     </span>
                   )}
@@ -135,6 +142,13 @@ export const QuickOpen = ({ onClose }: QuickOpenProps): JSX.Element => {
               );
             })
           )}
+        </div>
+
+        {/* Footer hint */}
+        <div className="px-5 py-2 border-t border-border-subtle/50 flex items-center gap-3 text-[10px] text-txt-3/60">
+          <span><kbd className="bg-surface-3/50 px-1 py-0.5 rounded text-[9px]">↑↓</kbd> navigate</span>
+          <span><kbd className="bg-surface-3/50 px-1 py-0.5 rounded text-[9px]">↵</kbd> open</span>
+          <span><kbd className="bg-surface-3/50 px-1 py-0.5 rounded text-[9px]">esc</kbd> close</span>
         </div>
       </div>
     </div>

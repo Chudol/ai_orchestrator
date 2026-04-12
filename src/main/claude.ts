@@ -156,22 +156,65 @@ export const mcpListTools = (command: string, args: string[], env: Record<string
     });
 
     let buffer = '';
-    let msgId = 1;
+    let resolved = false;
     let initialized = false;
-    const timeout = setTimeout(() => {
-      proc.kill();
-      resolve([]);
-    }, 15000);
+    let msgId = 1;
 
-    const sendMessage = (method: string, params: Record<string, unknown> = {}): void => {
-      const id = msgId++;
-      const msg = JSON.stringify({ jsonrpc: '2.0', id, method, params });
-      proc.stdin.write(`Content-Length: ${Buffer.byteLength(msg)}\r\n\r\n${msg}`);
+    const timeout = setTimeout(() => {
+      if (!resolved) { resolved = true; proc.kill(); resolve([]); }
+    }, 20000);
+
+    const finish = (tools: McpTool[]): void => {
+      if (resolved) return;
+      resolved = true;
+      clearTimeout(timeout);
+      proc.kill();
+      resolve(tools);
+    };
+
+    // Send as plain JSON lines (works with mcp-remote and most servers)
+    const sendJsonLine = (method: string, params: Record<string, unknown> = {}, isNotification = false): void => {
+      const payload: Record<string, unknown> = { jsonrpc: '2.0', method, params };
+      if (!isNotification) payload.id = msgId++;
+      proc.stdin.write(JSON.stringify(payload) + '\n');
+    };
+
+    const handleMessage = (msg: Record<string, unknown>): void => {
+      const result = msg.result as Record<string, unknown> | undefined;
+      if (!result) return;
+      if (!initialized && result.protocolVersion) {
+        initialized = true;
+        sendJsonLine('notifications/initialized', {}, true);
+        sendJsonLine('tools/list');
+      } else if (result.tools) {
+        finish(
+          (result.tools as McpTool[]).map((t) => ({
+            name: t.name || '',
+            description: t.description || '',
+            inputSchema: t.inputSchema || { type: 'object', properties: {}, required: [] },
+          })),
+        );
+      }
     };
 
     proc.stdout.on('data', (chunk: Buffer) => {
       buffer += chunk.toString();
-      // Parse JSON-RPC messages from the buffer
+
+      // Try plain JSON lines first (one JSON object per line)
+      const lines = buffer.split('\n');
+      buffer = lines.pop() ?? '';
+      for (const line of lines) {
+        const trimmed = line.trim();
+        if (!trimmed || trimmed.startsWith('Content-Length')) continue;
+        try {
+          handleMessage(JSON.parse(trimmed));
+        } catch {
+          // Not JSON - might be Content-Length framed, put back
+          buffer = trimmed + '\n' + buffer;
+        }
+      }
+
+      // Also try Content-Length framing for standard SDK servers
       while (true) {
         const headerEnd = buffer.indexOf('\r\n\r\n');
         if (headerEnd === -1) break;
@@ -183,43 +226,18 @@ export const mcpListTools = (command: string, args: string[], env: Record<string
         if (buffer.length < bodyStart + contentLength) break;
         const body = buffer.slice(bodyStart, bodyStart + contentLength);
         buffer = buffer.slice(bodyStart + contentLength);
-
         try {
-          const msg = JSON.parse(body);
-          if (!initialized && msg.result?.protocolVersion) {
-            initialized = true;
-            sendMessage('notifications/initialized');
-            sendMessage('tools/list');
-          } else if (msg.result?.tools) {
-            clearTimeout(timeout);
-            proc.kill();
-            resolve(
-              (msg.result.tools as McpTool[]).map((t) => ({
-                name: t.name || '',
-                description: t.description || '',
-                inputSchema: t.inputSchema || { type: 'object', properties: {}, required: [] },
-              })),
-            );
-            return;
-          }
+          handleMessage(JSON.parse(body));
         } catch {
-          // skip malformed messages
+          // skip
         }
       }
     });
 
-    proc.on('error', () => {
-      clearTimeout(timeout);
-      resolve([]);
-    });
+    proc.on('error', () => finish([]));
+    proc.on('exit', () => { if (!resolved) finish([]); });
 
-    proc.on('exit', () => {
-      clearTimeout(timeout);
-      resolve([]);
-    });
-
-    // Start with initialize
-    sendMessage('initialize', {
+    sendJsonLine('initialize', {
       protocolVersion: '2024-11-05',
       capabilities: {},
       clientInfo: { name: 'orchestrator', version: '1.0.0' },

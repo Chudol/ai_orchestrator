@@ -91,101 +91,107 @@ const RepoCard = ({ repo, onBranchChanged }: RepoCardProps): JSX.Element => {
   };
 
   return (
-    <div className="bg-gray-800 rounded-lg p-4 border border-gray-700">
-      <div className="mb-3">
-        <div className="flex items-center justify-between">
-          <span className="text-purple-400 text-sm font-semibold">{repo.folderName}</span>
-          <div className="flex items-center gap-2">
-            <span className="text-blue-400 font-mono text-sm font-medium px-2 py-0.5 bg-blue-900/30 rounded">
-              {repo.branch ?? 'detached'}
-            </span>
-            {status && (
-              <span className={`text-xs px-2 py-0.5 rounded ${status.dirty ? 'bg-yellow-900/30 text-yellow-400' : 'bg-green-900/30 text-green-400'}`}>
-                {status.dirty
-                  ? `${status.staged}S ${status.unstaged}M ${status.untracked}U`
-                  : 'clean'}
-              </span>
-            )}
+    <div className="section-card card-glow p-5 transition-all">
+      {/* Header */}
+      <div className="flex items-center justify-between mb-4">
+        <div className="flex items-center gap-3">
+          <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-blue-500/15 to-cyan-500/15 border border-border flex items-center justify-center">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="text-accent-blue">
+              <circle cx="12" cy="12" r="3" /><line x1="3" y1="12" x2="9" y2="12" /><line x1="15" y1="12" x2="21" y2="12" />
+            </svg>
+          </div>
+          <div>
+            <span className="text-accent-blue font-semibold text-[14px]">{repo.folderName}</span>
+            <div className="text-[10px] text-txt-3 font-mono mt-0.5 truncate max-w-[300px]">{repo.path}</div>
           </div>
         </div>
-        <span className="text-gray-500 text-xs">{repo.path}</span>
+        <div className="flex items-center gap-2">
+          <span className="badge-branch text-[12px] font-mono px-2.5 py-1 rounded-md font-medium">
+            {repo.branch ?? 'detached'}
+          </span>
+          {status && (
+            <span className={`text-[10px] px-2 py-1 rounded-md font-mono font-medium ${
+              status.dirty
+                ? 'bg-yellow-500/10 text-yellow-400 border border-yellow-500/15'
+                : 'bg-green-500/10 text-green-400 border border-green-500/15'
+            }`}>
+              {status.dirty
+                ? `${status.staged}S ${status.unstaged}M ${status.untracked}U`
+                : 'clean'}
+            </span>
+          )}
+        </div>
       </div>
 
-      <div className="flex items-center gap-2">
-        <button
-          className="px-3 py-1.5 text-xs rounded bg-gray-700 hover:bg-gray-600 text-gray-300 transition-colors disabled:opacity-50"
-          onClick={handleStatus}
-          disabled={statusLoading}
-        >
-          {statusLoading ? 'Checking...' : 'Status'}
-        </button>
-        <button
-          className="px-3 py-1.5 text-xs rounded bg-gray-700 hover:bg-gray-600 text-gray-300 transition-colors relative"
-          onClick={handleLoadBranches}
-        >
-          Checkout
-        </button>
-        <button
-          className="px-3 py-1.5 text-xs rounded bg-gray-700 hover:bg-gray-600 text-gray-300 transition-colors disabled:opacity-50"
-          onClick={handleFetch}
-          disabled={fetchLoading}
-        >
-          {fetchLoading ? 'Fetching...' : 'Fetch'}
-        </button>
-        <button
-          className="px-3 py-1.5 text-xs rounded bg-gray-700 hover:bg-gray-600 text-gray-300 transition-colors disabled:opacity-50"
-          onClick={handlePull}
-          disabled={pullLoading}
-        >
-          {pullLoading ? 'Pulling...' : 'Pull'}
-        </button>
+      {/* Actions */}
+      <div className="flex items-center gap-2 flex-wrap">
+        {['Status', 'Checkout', 'Fetch', 'Pull'].map((action) => {
+          const loading = action === 'Status' ? statusLoading : action === 'Fetch' ? fetchLoading : action === 'Pull' ? pullLoading : false;
+          const handler = action === 'Status' ? handleStatus : action === 'Checkout' ? handleLoadBranches : action === 'Fetch' ? handleFetch : handlePull;
+          return (
+            <button
+              key={action}
+              className="px-3.5 py-1.5 text-xs font-medium rounded-lg bg-surface-2/60 hover:bg-surface-3 border border-border text-txt-2 hover:text-txt-1 transition-all disabled:opacity-40"
+              onClick={handler}
+              disabled={loading}
+            >
+              {loading ? `${action}...` : action}
+            </button>
+          );
+        })}
 
         {fetchResult && (
-          <span className={`text-xs ${fetchResult === 'Fetched' ? 'text-green-400' : 'text-red-400'}`}>
+          <span className={`text-[11px] font-medium ${fetchResult === 'Fetched' ? 'text-green-400' : 'text-red-400'}`}>
             {fetchResult}
           </span>
         )}
         {pullResult && (
-          <span className={`text-xs ${pullResult.includes('Failed') ? 'text-red-400' : 'text-green-400'} max-w-xs truncate`}>
+          <span className={`text-[11px] font-medium max-w-xs truncate ${pullResult.includes('Failed') ? 'text-red-400' : 'text-green-400'}`}>
             {pullResult}
           </span>
         )}
       </div>
 
+      {/* Branch list */}
       {branchesOpen && (() => {
         const filtered = branchSearch
           ? branches.filter((b) => b.toLowerCase().includes(branchSearch.toLowerCase()))
           : branches;
         return (
-          <div className="mt-3 bg-gray-900 rounded border border-gray-700">
-            <div className="p-2 border-b border-gray-700">
+          <div className="mt-4 glass rounded-xl overflow-hidden">
+            <div className="p-2.5 border-b border-border-subtle">
               <input
                 type="text"
-                className="w-full bg-gray-800 text-gray-200 text-xs px-2 py-1.5 rounded border border-gray-600 focus:border-blue-500 focus:outline-none placeholder-gray-500"
+                className="w-full bg-surface-0/50 text-txt-1 text-xs px-3 py-2 rounded-lg input-field placeholder-txt-3 font-mono"
                 placeholder="Search branches..."
                 value={branchSearch}
                 onChange={(e) => setBranchSearch(e.target.value)}
                 autoFocus
               />
             </div>
-            <div className="max-h-52 overflow-y-auto">
+            <div className="max-h-60 overflow-y-auto">
               {checkoutLoading && (
-                <div className="px-3 py-1.5 text-xs text-gray-400">Switching...</div>
+                <div className="px-4 py-2.5 text-xs text-txt-3 animate-pulse">Switching branch...</div>
               )}
               {filtered.map((b) => (
                 <button
                   key={b}
-                  className={`block w-full text-left px-3 py-1.5 text-xs hover:bg-gray-700 transition-colors ${
-                    b === repo.branch ? 'text-blue-400 font-medium' : 'text-gray-300'
+                  className={`block w-full text-left px-4 py-2 text-xs hover:bg-surface-2/50 transition-colors ${
+                    b === repo.branch ? 'text-accent-blue font-medium' : 'text-txt-2 hover:text-txt-1'
                   }`}
                   onClick={() => handleCheckout(b)}
                   disabled={checkoutLoading}
                 >
-                  {b === repo.branch ? `* ${b}` : b}
+                  {b === repo.branch && (
+                    <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" className="inline mr-1.5 -mt-0.5">
+                      <polyline points="20 6 9 17 4 12" />
+                    </svg>
+                  )}
+                  {b}
                 </button>
               ))}
               {filtered.length === 0 && (
-                <div className="px-3 py-1.5 text-xs text-gray-500">No branches found</div>
+                <div className="px-4 py-3 text-xs text-txt-3 text-center">No branches found</div>
               )}
             </div>
           </div>
@@ -203,32 +209,44 @@ export const GitPanel = (): JSX.Element => {
     await refreshBranches();
   }, [refreshBranches]);
 
-  // Auto-refresh every 30s
   useEffect(() => {
     const interval = setInterval(handleRefresh, 30000);
     return () => clearInterval(interval);
   }, [handleRefresh]);
 
   return (
-    <div className="flex-1 overflow-y-auto p-6 bg-gray-900">
+    <div className="flex-1 overflow-y-auto p-6 bg-surface-0">
       <div className="max-w-3xl mx-auto">
-        <div className="flex items-center justify-between mb-4">
-          <span className="text-sm text-gray-300 font-medium">Git Repositories</span>
+        <div className="flex items-center justify-between mb-6">
+          <div className="flex items-center gap-3">
+            <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-green-500/15 to-blue-500/15 border border-border flex items-center justify-center">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="text-green-400">
+                <circle cx="12" cy="12" r="3" /><line x1="3" y1="12" x2="9" y2="12" /><line x1="15" y1="12" x2="21" y2="12" />
+              </svg>
+            </div>
+            <span className="gradient-text font-bold text-lg">Git Repositories</span>
+          </div>
           <button
-            className="text-gray-500 hover:text-gray-300 text-sm px-2 py-0.5 rounded hover:bg-gray-800"
+            className="text-txt-3 hover:text-accent-blue text-xs px-3 py-1.5 rounded-lg hover:bg-surface-2/50 transition-all flex items-center gap-1.5"
             onClick={handleRefresh}
             title="Refresh"
           >
-            &#8635; Refresh
+            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+              <path d="M1 4v6h6M23 20v-6h-6M20.49 9A9 9 0 105.64 5.64L1 10m22 4l-4.64 4.36A9 9 0 013.51 15" />
+            </svg>
+            Refresh
           </button>
         </div>
 
         {trackedRepos.length === 0 ? (
-          <div className="text-gray-500 text-sm text-center py-12">
-            Select a session to see its tracked repositories.
+          <div className="flex flex-col items-center justify-center py-20 text-txt-3">
+            <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1" className="opacity-20 mb-4">
+              <circle cx="12" cy="12" r="3" /><line x1="3" y1="12" x2="9" y2="12" /><line x1="15" y1="12" x2="21" y2="12" />
+            </svg>
+            <span className="text-sm">Select a session to see its tracked repositories.</span>
           </div>
         ) : (
-          <div className="flex flex-col gap-3">
+          <div className="flex flex-col gap-4">
             {trackedRepos.map((repo) => (
               <RepoCard key={repo.path} repo={repo} onBranchChanged={handleRefresh} />
             ))}

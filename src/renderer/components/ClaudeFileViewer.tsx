@@ -23,32 +23,36 @@ export const ClaudeFileViewer = (): JSX.Element => {
 
   return (
     <div className="flex flex-col flex-1 min-h-0">
-      <div className="flex items-center bg-gray-950 overflow-x-auto flex-shrink-0">
+      <div className="flex items-center bg-surface-1/80 border-b border-border overflow-x-auto flex-shrink-0">
         {openFiles.map((file) => (
           <div
             key={file.path}
-            className={`flex items-center gap-1 px-3 py-1.5 text-xs cursor-pointer border-r border-gray-800 flex-shrink-0 ${
+            className={`group flex items-center gap-1.5 px-3 py-1.5 text-[11px] cursor-pointer border-r border-border-subtle/50 flex-shrink-0 transition-all ${
               activeFilePath === file.path
-                ? 'bg-gray-800 text-white'
-                : 'text-gray-400 hover:bg-gray-900'
+                ? 'tab-bottom-active text-txt-1'
+                : 'text-txt-3 hover:bg-surface-2/30 hover:text-txt-2'
             }`}
             onClick={() => setActiveFile(file.path)}
           >
-            <span className="text-purple-400 text-[10px]">C</span>
-            <span className="truncate max-w-[120px]">{file.name}</span>
+            <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="text-purple-400/70 flex-shrink-0">
+              <path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z" /><polyline points="14 2 14 8 20 8" />
+            </svg>
+            <span className="truncate max-w-[120px] font-medium">{file.name}</span>
             <button
-              className="text-gray-500 hover:text-red-400 ml-1"
+              className="opacity-0 group-hover:opacity-100 text-txt-3 hover:text-red-400 ml-0.5 transition-all"
               onClick={(e) => {
                 e.stopPropagation();
                 closeFile(file.path);
               }}
             >
-              &#x2715;
+              <svg width="8" height="8" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3">
+                <line x1="18" y1="6" x2="6" y2="18" /><line x1="6" y1="6" x2="18" y2="18" />
+              </svg>
             </button>
           </div>
         ))}
       </div>
-      <div className="flex-1 overflow-hidden">
+      <div className="flex-1 overflow-hidden bg-surface-0">
         {activeFile ? (
           <Editor
             theme="vs-dark"
@@ -69,7 +73,7 @@ export const ClaudeFileViewer = (): JSX.Element => {
             }}
           />
         ) : (
-          <div className="flex items-center justify-center h-full text-gray-500 text-sm">
+          <div className="flex items-center justify-center h-full text-txt-3 text-sm opacity-40">
             No file selected
           </div>
         )}
