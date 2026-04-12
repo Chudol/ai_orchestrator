@@ -7,7 +7,7 @@ import { promisify } from 'util';
 
 const execFileAsync = promisify(execFile);
 import { IPC_CHANNELS } from '@shared/channels';
-import { Project, FileEntry } from '@shared/types';
+import { Project, FileEntry, StatusOption } from '@shared/types';
 import { listSkills, listAgents, listMcpServers, mcpListTools } from './claude';
 
 const IGNORED_DIRS = new Set([
@@ -28,6 +28,7 @@ import {
   addSession,
   renameSession as renameSessionStore,
   removeSession as removeSessionStore,
+  reorderSessions as reorderSessionsStore,
   getCommandsByProject,
   addCommand,
   updateCommand,
@@ -36,6 +37,11 @@ import {
   trackRepo,
   untrackRepo,
   getTrackedRepoPaths,
+  getStatusOptions,
+  setStatusOptions,
+  getSessionUserStatus,
+  setSessionUserStatus,
+  getAllSessionUserStatuses,
 } from './store';
 import {
   createPtySession,
@@ -113,7 +119,12 @@ export const registerIpcHandlers = (): void => {
         );
         const sessionInfo = allSessions.find((s) => s.id === sessionId);
         if (sessionInfo) {
-          respawnSession(sessionId, sessionInfo.projectPath, sessionInfo.name, sessionInfo.claudeSessionId || null);
+          try {
+            respawnSession(sessionId, sessionInfo.projectPath, sessionInfo.name, sessionInfo.claudeSessionId || null);
+          } catch (err) {
+            console.error(`Failed to respawn session ${sessionId}:`, err);
+            return [];
+          }
         }
       }
       const windowId = event.sender.id;
@@ -150,6 +161,13 @@ export const registerIpcHandlers = (): void => {
       deleteSessionLogs(sessionId);
       stopSession(sessionId);
       removeSessionStore(sessionId);
+    },
+  );
+
+  ipcMain.handle(
+    IPC_CHANNELS.SESSIONS_REORDER,
+    (_event: IpcMainInvokeEvent, projectId: string, orderedIds: string[]) => {
+      reorderSessionsStore(projectId, orderedIds);
     },
   );
 
@@ -376,6 +394,13 @@ export const registerIpcHandlers = (): void => {
   );
 
   ipcMain.handle(
+    IPC_CHANNELS.FS_WRITEFILE,
+    async (_event: IpcMainInvokeEvent, filePath: string, content: string): Promise<void> => {
+      await fs.promises.writeFile(filePath, content, 'utf-8');
+    },
+  );
+
+  ipcMain.handle(
     IPC_CHANNELS.TERMINAL_CREATE,
     (_event: IpcMainInvokeEvent, cwd: string, cols?: number, rows?: number) => {
       return createTerminal(cwd, cols, rows);
@@ -485,4 +510,35 @@ export const registerIpcHandlers = (): void => {
       return mcpListTools(command, args, env);
     },
   );
+
+  // Settings - status options
+
+  ipcMain.handle(IPC_CHANNELS.SETTINGS_GET_STATUS_OPTIONS, () => {
+    return getStatusOptions();
+  });
+
+  ipcMain.handle(
+    IPC_CHANNELS.SETTINGS_SET_STATUS_OPTIONS,
+    (_event: IpcMainInvokeEvent, options: StatusOption[]) => {
+      setStatusOptions(options);
+    },
+  );
+
+  ipcMain.handle(
+    IPC_CHANNELS.SETTINGS_GET_SESSION_STATUS,
+    (_event: IpcMainInvokeEvent, sessionId: string) => {
+      return getSessionUserStatus(sessionId);
+    },
+  );
+
+  ipcMain.handle(
+    IPC_CHANNELS.SETTINGS_SET_SESSION_STATUS,
+    (_event: IpcMainInvokeEvent, sessionId: string, statusId: string | null) => {
+      setSessionUserStatus(sessionId, statusId);
+    },
+  );
+
+  ipcMain.handle(IPC_CHANNELS.SETTINGS_GET_ALL_SESSION_STATUSES, () => {
+    return getAllSessionUserStatuses();
+  });
 };

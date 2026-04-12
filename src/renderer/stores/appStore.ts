@@ -1,6 +1,10 @@
 import { create } from 'zustand';
 import { useShallow } from 'zustand/react/shallow';
-import { Project, Session, SessionStateInfo, OpenFile, OpenTerminal, TrackedRepoInfo } from '@shared/types';
+import { Project, Session, SessionStateInfo, SessionInternalState, OpenFile, OpenTerminal, TrackedRepoInfo } from '@shared/types';
+
+const BUSY_STATES: SessionInternalState[] = ['working', 'thinking', 'teammates_running'];
+const UNREAD_DELAY = 30_000;
+const unreadTimers = new Map<string, ReturnType<typeof setTimeout>>();
 
 interface AppState {
   projects: Project[];
@@ -14,8 +18,10 @@ interface AppState {
   deleteSession: (sessionId: string) => Promise<void>;
   setActiveSession: (sessionId: string | null) => Promise<void>;
   renameSession: (sessionId: string, name: string) => Promise<void>;
+  reorderSessions: (projectId: string, orderedIds: string[]) => Promise<void>;
   updateSessionStatus: (sessionId: string, status: Session['status']) => void;
   sessionStates: Map<string, SessionStateInfo>;
+  unreadSessions: Set<string>;
   updateSessionState: (sessionId: string, info: SessionStateInfo) => void;
   sessionClaudeIds: Map<string, string>;
   updateSessionClaudeId: (sessionId: string, claudeId: string) => void;
@@ -25,6 +31,8 @@ interface AppState {
   openFile: (filePath: string, name: string) => Promise<void>;
   closeFile: (filePath: string) => void;
   setActiveFile: (filePath: string) => void;
+  updateFileContent: (filePath: string, content: string) => void;
+  saveFile: (filePath: string) => Promise<void>;
   projectTerminals: Map<string, OpenTerminal[]>;
   trackedRepos: Map<string, TrackedRepoInfo[]>;
   trackRepo: (dirPath: string) => Promise<void>;
@@ -110,6 +118,7 @@ export const useAppStore = create<AppState>((set, get) => ({
   sessions: new Map(),
   activeSessionId: null,
   sessionStates: new Map(),
+  unreadSessions: new Set(),
   sessionClaudeIds: new Map(),
   trackedRepos: new Map(),
   fileBrowserOpen: false,
@@ -198,14 +207,21 @@ export const useAppStore = create<AppState>((set, get) => ({
 
   deleteSession: async (sessionId) => {
     await window.api.deleteSession(sessionId);
-    const { sessions, activeSessionId } = get();
+    if (unreadTimers.has(sessionId)) {
+      clearTimeout(unreadTimers.get(sessionId)!);
+      unreadTimers.delete(sessionId);
+    }
+    const { sessions, activeSessionId, unreadSessions } = get();
     const updated = new Map(sessions);
     for (const [projectId, list] of updated) {
       updated.set(projectId, list.filter((s) => s.id !== sessionId));
     }
+    const newUnread = new Set(unreadSessions);
+    newUnread.delete(sessionId);
     set({
       sessions: updated,
       activeSessionId: activeSessionId === sessionId ? null : activeSessionId,
+      unreadSessions: newUnread,
     });
   },
 
@@ -225,7 +241,19 @@ export const useAppStore = create<AppState>((set, get) => ({
           list.map((s) => (s.id === sessionId ? { ...s, status: 'running' as const } : s)),
         );
       }
-      set({ activeSessionId: sessionId, sessions: updated });
+      // Clear unread state for this session
+      if (unreadTimers.has(sessionId)) {
+        clearTimeout(unreadTimers.get(sessionId)!);
+        unreadTimers.delete(sessionId);
+      }
+      const unread = get().unreadSessions;
+      if (unread.has(sessionId)) {
+        const newUnread = new Set(unread);
+        newUnread.delete(sessionId);
+        set({ activeSessionId: sessionId, sessions: updated, unreadSessions: newUnread });
+      } else {
+        set({ activeSessionId: sessionId, sessions: updated });
+      }
       get().refreshTrackedRepoBranches();
     } else {
       set({ activeSessionId: sessionId });
@@ -242,6 +270,19 @@ export const useAppStore = create<AppState>((set, get) => ({
         list.map((s) => (s.id === sessionId ? { ...s, name } : s)),
       );
     }
+    set({ sessions: updated });
+  },
+
+  reorderSessions: async (projectId, orderedIds) => {
+    await window.api.reorderSessions(projectId, orderedIds);
+    const { sessions } = get();
+    const updated = new Map(sessions);
+    const list = updated.get(projectId) ?? [];
+    const sorted = orderedIds
+      .map((id) => list.find((s) => s.id === id))
+      .filter((s): s is Session => s !== undefined);
+    const remaining = list.filter((s) => !orderedIds.includes(s.id));
+    updated.set(projectId, [...sorted, ...remaining]);
     set({ sessions: updated });
   },
 
@@ -333,6 +374,35 @@ export const useAppStore = create<AppState>((set, get) => ({
     set({ projectFiles: updated, activeBottomTab: { type: 'file', path: filePath } });
   },
 
+  updateFileContent: (filePath, content) => {
+    const projectId = findProjectIdForSession(get().activeSessionId, get().sessions);
+    if (!projectId) return;
+    const pf = get().projectFiles.get(projectId);
+    if (!pf) return;
+    const files = pf.files.map((f) =>
+      f.path === filePath ? { ...f, content, dirty: true } : f,
+    );
+    const updated = new Map(get().projectFiles);
+    updated.set(projectId, { ...pf, files });
+    set({ projectFiles: updated });
+  },
+
+  saveFile: async (filePath) => {
+    const projectId = findProjectIdForSession(get().activeSessionId, get().sessions);
+    if (!projectId) return;
+    const pf = get().projectFiles.get(projectId);
+    if (!pf) return;
+    const file = pf.files.find((f) => f.path === filePath);
+    if (!file) return;
+    await window.api.writeFile(filePath, file.content);
+    const files = pf.files.map((f) =>
+      f.path === filePath ? { ...f, dirty: false } : f,
+    );
+    const updated = new Map(get().projectFiles);
+    updated.set(projectId, { ...pf, files });
+    set({ projectFiles: updated });
+  },
+
   setActiveBottomTab: (tab) => {
     set({ activeBottomTab: tab });
   },
@@ -412,8 +482,45 @@ export const useAppStore = create<AppState>((set, get) => ({
   },
 
   updateSessionState: (sessionId, info) => {
+    const prevState = get().sessionStates.get(sessionId)?.state;
     const updated = new Map(get().sessionStates);
     updated.set(sessionId, info);
+
+    const wasBusy = prevState !== undefined && BUSY_STATES.includes(prevState);
+    const isNowIdle = info.state === 'idle';
+    const isNowBusy = BUSY_STATES.includes(info.state);
+    const isActive = get().activeSessionId === sessionId;
+
+    if (wasBusy && isNowIdle && !isActive) {
+      // Session finished work while not viewed → start 30s timer
+      if (unreadTimers.has(sessionId)) clearTimeout(unreadTimers.get(sessionId)!);
+      unreadTimers.set(sessionId, setTimeout(() => {
+        unreadTimers.delete(sessionId);
+        const current = useAppStore.getState();
+        if (
+          current.sessionStates.get(sessionId)?.state === 'idle' &&
+          current.activeSessionId !== sessionId
+        ) {
+          const newUnread = new Set(current.unreadSessions);
+          newUnread.add(sessionId);
+          useAppStore.setState({ unreadSessions: newUnread });
+        }
+      }, UNREAD_DELAY));
+    } else if (isNowBusy) {
+      // Session started working again → cancel timer + clear unread
+      if (unreadTimers.has(sessionId)) {
+        clearTimeout(unreadTimers.get(sessionId)!);
+        unreadTimers.delete(sessionId);
+      }
+      const unread = get().unreadSessions;
+      if (unread.has(sessionId)) {
+        const newUnread = new Set(unread);
+        newUnread.delete(sessionId);
+        set({ sessionStates: updated, unreadSessions: newUnread });
+        return;
+      }
+    }
+
     set({ sessionStates: updated });
   },
 

@@ -10,6 +10,7 @@ export const IPC_CHANNELS = {
   SESSIONS_INPUT: 'sessions:input',
   SESSIONS_RENAME: 'sessions:rename',
   SESSIONS_DELETE: 'sessions:delete',
+  SESSIONS_REORDER: 'sessions:reorder',
   PROJECTS_TRACK_REPO: 'projects:track-repo',
   PROJECTS_UNTRACK_REPO: 'projects:untrack-repo',
   PROJECTS_TRACKED_PATHS: 'projects:tracked-paths',
@@ -29,6 +30,7 @@ export const IPC_CHANNELS = {
   FS_READDIR: 'fs:readdir',
   FS_READDIR_RECURSIVE: 'fs:readdir-recursive',
   FS_READFILE: 'fs:readfile',
+  FS_WRITEFILE: 'fs:writefile',
   TERMINAL_CREATE: 'terminal:create',
   TERMINAL_DESTROY: 'terminal:destroy',
   TERMINAL_INPUT: 'terminal:input',
@@ -46,6 +48,11 @@ export const IPC_CHANNELS = {
   CLAUDE_AGENTS: 'claude:agents',
   CLAUDE_MCP_SERVERS: 'claude:mcp-servers',
   CLAUDE_MCP_LIST_TOOLS: 'claude:mcp-list-tools',
+  SETTINGS_GET_STATUS_OPTIONS: 'settings:get-status-options',
+  SETTINGS_SET_STATUS_OPTIONS: 'settings:set-status-options',
+  SETTINGS_GET_SESSION_STATUS: 'settings:get-session-status',
+  SETTINGS_SET_SESSION_STATUS: 'settings:set-session-status',
+  SETTINGS_GET_ALL_SESSION_STATUSES: 'settings:get-all-session-statuses',
 } as const;
 
 export type IpcChannel = typeof IPC_CHANNELS[keyof typeof IPC_CHANNELS];

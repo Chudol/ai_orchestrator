@@ -1,5 +1,5 @@
 import Store from 'electron-store';
-import { Project, Session, Command, StoreSchema } from '@shared/types';
+import { Project, Session, Command, StatusOption, StoreSchema, DEFAULT_STATUS_OPTIONS } from '@shared/types';
 import { v4 as uuidv4 } from 'uuid';
 
 const store = new Store<StoreSchema>({
@@ -8,6 +8,8 @@ const store = new Store<StoreSchema>({
     sessions: [],
     commands: [],
     trackedRepoPaths: {},
+    sessionUserStatuses: {},
+    statusOptions: DEFAULT_STATUS_OPTIONS,
   },
 });
 
@@ -106,11 +108,31 @@ export const untrackRepo = (projectId: string, dirPath: string): void => {
 export const removeSession = (id: string): void => {
   const sessions = getSessions().filter((s) => s.id !== id);
   store.set('sessions', sessions);
+  const statuses = store.get('sessionUserStatuses') ?? {};
+  if (statuses[id]) {
+    delete statuses[id];
+    store.set('sessionUserStatuses', statuses);
+  }
 };
 
 export const resetAllSessionStatuses = (): void => {
   const sessions = getSessions().map((s) => ({ ...s, status: 'stopped' as const }));
   store.set('sessions', sessions);
+};
+
+export const reorderSessions = (projectId: string, orderedIds: string[]): void => {
+  const sessions = getSessions();
+  const projectSessions = sessions.filter((s) => s.projectId === projectId);
+  const otherSessions = sessions.filter((s) => s.projectId !== projectId);
+  projectSessions.sort((a, b) => {
+    const idxA = orderedIds.indexOf(a.id);
+    const idxB = orderedIds.indexOf(b.id);
+    if (idxA === -1 && idxB === -1) return 0;
+    if (idxA === -1) return 1;
+    if (idxB === -1) return -1;
+    return idxA - idxB;
+  });
+  store.set('sessions', [...otherSessions, ...projectSessions]);
 };
 
 export const removeSessionsByProject = (projectId: string): void => {
@@ -175,4 +197,33 @@ export const reorderCommands = (projectId: string, orderedIds: string[]): void =
     return c;
   });
   store.set('commands', commands);
+};
+
+// Status options
+
+export const getStatusOptions = (): StatusOption[] => {
+  return store.get('statusOptions');
+};
+
+export const setStatusOptions = (options: StatusOption[]): void => {
+  store.set('statusOptions', options);
+};
+
+export const getSessionUserStatus = (sessionId: string): string | null => {
+  const all = store.get('sessionUserStatuses') ?? {};
+  return all[sessionId] ?? null;
+};
+
+export const setSessionUserStatus = (sessionId: string, statusId: string | null): void => {
+  const all = store.get('sessionUserStatuses') ?? {};
+  if (statusId === null) {
+    delete all[sessionId];
+  } else {
+    all[sessionId] = statusId;
+  }
+  store.set('sessionUserStatuses', all);
+};
+
+export const getAllSessionUserStatuses = (): Record<string, string> => {
+  return store.get('sessionUserStatuses') ?? {};
 };

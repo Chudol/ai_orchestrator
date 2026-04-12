@@ -55,6 +55,7 @@ export interface OpenFile {
   path: string;
   name: string;
   content: string;
+  dirty?: boolean;
 }
 
 export interface TerminalPane {
@@ -114,11 +115,26 @@ export interface McpTool {
   };
 }
 
+export interface StatusOption {
+  id: string;
+  label: string;
+  color: string; // tailwind color name e.g. 'blue', 'yellow', 'green', 'purple'
+}
+
+export const DEFAULT_STATUS_OPTIONS: StatusOption[] = [
+  { id: 'todo', label: 'Todo', color: 'gray' },
+  { id: 'in-progress', label: 'In Progress', color: 'blue' },
+  { id: 'review', label: 'Review', color: 'yellow' },
+  { id: 'done', label: 'Done', color: 'green' },
+];
+
 export interface StoreSchema {
   projects: Project[];
   sessions: Session[];
   commands: Command[];
   trackedRepoPaths: Record<string, string[]>; // projectId -> paths
+  sessionUserStatuses: Record<string, string>; // sessionId -> statusOptionId
+  statusOptions: StatusOption[];
 }
 
 export interface ElectronApi {
@@ -133,6 +149,7 @@ export interface ElectronApi {
   sendInput: (sessionId: string, data: string) => Promise<void>;
   renameSession: (sessionId: string, name: string) => Promise<void>;
   deleteSession: (sessionId: string) => Promise<void>;
+  reorderSessions: (projectId: string, orderedIds: string[]) => Promise<void>;
   onSessionOutput: (callback: (sessionId: string, data: string) => void) => () => void;
   onSessionExit: (callback: (sessionId: string) => void) => () => void;
   onSessionStateUpdate: (callback: (sessionId: string, info: SessionStateInfo) => void) => () => void;
@@ -141,6 +158,7 @@ export interface ElectronApi {
   readDirectory: (dirPath: string) => Promise<FileEntry[]>;
   readDirectoryRecursive: (dirPath: string) => Promise<FileEntry[]>;
   readFile: (filePath: string) => Promise<string>;
+  writeFile: (filePath: string, content: string) => Promise<void>;
   createTerminal: (cwd: string, cols?: number, rows?: number) => Promise<string>;
   destroyTerminal: (terminalId: string) => Promise<void>;
   terminalInput: (terminalId: string, data: string) => Promise<void>;
@@ -169,4 +187,9 @@ export interface ElectronApi {
   listAgents: (projectPath: string | null) => Promise<AgentInfo[]>;
   listMcpServers: (projectPath: string | null) => Promise<McpServerConfig[]>;
   mcpListTools: (command: string, args: string[], env: Record<string, string>) => Promise<McpTool[]>;
+  getStatusOptions: () => Promise<StatusOption[]>;
+  setStatusOptions: (options: StatusOption[]) => Promise<void>;
+  getSessionUserStatus: (sessionId: string) => Promise<string | null>;
+  setSessionUserStatus: (sessionId: string, statusId: string | null) => Promise<void>;
+  getAllSessionUserStatuses: () => Promise<Record<string, string>>;
 }

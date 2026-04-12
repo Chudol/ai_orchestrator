@@ -14,6 +14,7 @@ const api: ElectronApi = {
   sendInput: (sessionId, data) => ipcRenderer.invoke(IPC_CHANNELS.SESSIONS_INPUT, sessionId, data),
   renameSession: (sessionId, name) => ipcRenderer.invoke(IPC_CHANNELS.SESSIONS_RENAME, sessionId, name),
   deleteSession: (sessionId) => ipcRenderer.invoke(IPC_CHANNELS.SESSIONS_DELETE, sessionId),
+  reorderSessions: (projectId, orderedIds) => ipcRenderer.invoke(IPC_CHANNELS.SESSIONS_REORDER, projectId, orderedIds),
   trackRepo: (projectId, dirPath) => ipcRenderer.invoke(IPC_CHANNELS.PROJECTS_TRACK_REPO, projectId, dirPath),
   untrackRepo: (projectId, dirPath) => ipcRenderer.invoke(IPC_CHANNELS.PROJECTS_UNTRACK_REPO, projectId, dirPath),
   getTrackedRepoPaths: (projectId) => ipcRenderer.invoke(IPC_CHANNELS.PROJECTS_TRACKED_PATHS, projectId),
@@ -38,6 +39,7 @@ const api: ElectronApi = {
   readDirectory: (dirPath) => ipcRenderer.invoke(IPC_CHANNELS.FS_READDIR, dirPath),
   readDirectoryRecursive: (dirPath) => ipcRenderer.invoke(IPC_CHANNELS.FS_READDIR_RECURSIVE, dirPath),
   readFile: (filePath) => ipcRenderer.invoke(IPC_CHANNELS.FS_READFILE, filePath),
+  writeFile: (filePath, content) => ipcRenderer.invoke(IPC_CHANNELS.FS_WRITEFILE, filePath, content),
   onSessionStateUpdate: (callback) => {
     const handler = (_event: Electron.IpcRendererEvent, sessionId: string, info: import('@shared/types').SessionStateInfo): void => {
       callback(sessionId, info);
@@ -92,6 +94,11 @@ const api: ElectronApi = {
   listAgents: (projectPath) => ipcRenderer.invoke(IPC_CHANNELS.CLAUDE_AGENTS, projectPath),
   listMcpServers: (projectPath) => ipcRenderer.invoke(IPC_CHANNELS.CLAUDE_MCP_SERVERS, projectPath),
   mcpListTools: (command, args, env) => ipcRenderer.invoke(IPC_CHANNELS.CLAUDE_MCP_LIST_TOOLS, command, args, env),
+  getStatusOptions: () => ipcRenderer.invoke(IPC_CHANNELS.SETTINGS_GET_STATUS_OPTIONS),
+  setStatusOptions: (options) => ipcRenderer.invoke(IPC_CHANNELS.SETTINGS_SET_STATUS_OPTIONS, options),
+  getSessionUserStatus: (sessionId) => ipcRenderer.invoke(IPC_CHANNELS.SETTINGS_GET_SESSION_STATUS, sessionId),
+  setSessionUserStatus: (sessionId, statusId) => ipcRenderer.invoke(IPC_CHANNELS.SETTINGS_SET_SESSION_STATUS, sessionId, statusId),
+  getAllSessionUserStatuses: () => ipcRenderer.invoke(IPC_CHANNELS.SETTINGS_GET_ALL_SESSION_STATUSES),
 };
 
 contextBridge.exposeInMainWorld('api', api);
