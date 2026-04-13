@@ -23,6 +23,21 @@ export interface MajorChange {
 
 export const PATCH_NOTES: PatchNoteEntry[] = [
   {
+    version: '0.0.4',
+    title: 'Patch Notes & Polish',
+    date: '2026-04-13',
+    major: [
+      {
+        title: 'Patch Notes Panel',
+        description:
+          'See what\'s new in every release right inside the app. Collapsible version cards show major features and smaller improvements at a glance.',
+      },
+    ],
+    minor: [
+      'Fixed file drag and drop compatibility with latest Electron.',
+    ],
+  },
+  {
     version: '0.0.3',
     title: 'Solmeron is Born',
     date: '2026-04-13',
