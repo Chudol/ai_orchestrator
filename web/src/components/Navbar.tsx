@@ -24,10 +24,10 @@ export default function Navbar() {
       <div className="max-w-7xl mx-auto px-6 h-16 flex items-center justify-between">
         <button onClick={() => scrollTo('hero')} className="flex items-center gap-2">
           <div className="w-7 h-7 rounded-lg bg-gradient-to-br from-blue-500 to-purple-600 flex items-center justify-center">
-            <span className="text-white text-sm font-bold">O</span>
+            <span className="text-white text-sm font-bold">S</span>
           </div>
           <span className="text-lg font-bold bg-gradient-to-r from-blue-400 to-purple-400 bg-clip-text text-transparent">
-            Orchestrator
+            Solmeron
           </span>
         </button>
 

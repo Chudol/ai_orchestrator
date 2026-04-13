@@ -1,4 +1,4 @@
-# CODEX - Orchestrator
+# CODEX - Solmeron
 
 Tento soubor je zivouci dokument. Agenti ho MUSI cist pred praci a MUSI ho aktualizovat kdyz udelaji zasadni zmenu v architekture nebo pridaji novou dulezitou cast.
 
@@ -73,7 +73,7 @@ interface Session {
 
 ### Persistentni data
 - Projekty a sessions ulozene pres `electron-store` v JSON
-- Cesta: `~/.config/orchestrator/config.json` (nebo OS-specificky default)
+- Cesta: `~/Library/Application Support/Orchestrator/config.json` (zachovano pod puvodnim nazvem kvuli kompatibilite)
 
 ### IPC kanaly
 Definovane v `src/shared/channels.ts`:

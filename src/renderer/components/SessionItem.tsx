@@ -51,7 +51,6 @@ export const SessionItem = ({ session, isActive, isDragOver, onDragStart, onDrag
   const [elapsed, setElapsed] = useState(0);
   const [showRestartInput, setShowRestartInput] = useState(false);
   const [restartArgs, setRestartArgs] = useState('');
-  const restartInputRef = useRef<HTMLInputElement>(null);
   const [contextMenu, setContextMenu] = useState<{ x: number; y: number } | null>(null);
   const [menuPos, setMenuPos] = useState<{ left: number; top: number }>({ left: 0, top: 0 });
   const [statusSubmenu, setStatusSubmenu] = useState(false);
@@ -182,12 +181,6 @@ export const SessionItem = ({ session, isActive, isDragOver, onDragStart, onDrag
     setShowRestartInput(false);
     setRestartArgs('');
   };
-
-  useEffect(() => {
-    if (showRestartInput) {
-      requestAnimationFrame(() => restartInputRef.current?.focus());
-    }
-  }, [showRestartInput]);
 
   const handleContextMenu = (e: React.MouseEvent): void => {
     e.preventDefault();
@@ -412,34 +405,53 @@ export const SessionItem = ({ session, isActive, isDragOver, onDragStart, onDrag
         </div>
       )}
 
-      {/* Inline restart args input */}
+      {/* Restart with args modal */}
       {showRestartInput && (
-        <div className="px-2.5 pb-2">
-          <div className="flex items-center gap-1 glass rounded-lg px-2 py-1.5">
-            <span className="text-[10px] text-txt-3 font-mono whitespace-nowrap flex-shrink-0">
+        <div
+          className="fixed inset-0 modal-backdrop flex items-center justify-center z-50"
+          onClick={() => { setShowRestartInput(false); setRestartArgs(''); }}
+        >
+          <div
+            className="modal-card rounded-2xl w-[480px] p-6"
+            onClick={(e) => e.stopPropagation()}
+            onKeyDown={(e) => {
+              if (e.key === 'Escape') { setShowRestartInput(false); setRestartArgs(''); }
+            }}
+          >
+            <h3 className="text-sm font-semibold text-txt-1 mb-1">Restart session</h3>
+            <p className="text-[11px] text-txt-3 mb-4">{session.name}</p>
+
+            <label className="text-[11px] text-txt-2 mb-1.5 block">Command prefix</label>
+            <div className="bg-surface-0/40 rounded-lg px-3 py-2 mb-3 font-mono text-[12px] text-txt-3 select-all truncate">
               claude{claudeId ? ` --resume ${claudeId}` : ''}
-            </span>
+            </div>
+
+            <label className="text-[11px] text-txt-2 mb-1.5 block">Extra arguments</label>
             <input
-              ref={restartInputRef}
-              className="flex-1 bg-transparent text-[10px] text-txt-1 font-mono outline-none min-w-0 placeholder:text-txt-3/50"
+              className="w-full bg-surface-0/60 rounded-lg px-3 py-2.5 mb-4 border border-border-subtle focus:border-accent-blue/50 transition-colors text-[13px] text-txt-1 font-mono outline-none placeholder:text-txt-3/40"
               value={restartArgs}
               onChange={(e) => setRestartArgs(e.target.value)}
               onKeyDown={(e) => {
                 if (e.key === 'Enter') handleRestartSubmit();
-                if (e.key === 'Escape') { setShowRestartInput(false); setRestartArgs(''); }
               }}
-              onBlur={() => { setShowRestartInput(false); setRestartArgs(''); }}
               placeholder="--chrome ..."
+              autoFocus
             />
-            <button
-              className="text-txt-3 hover:text-accent-blue p-0.5 transition-colors flex-shrink-0"
-              onMouseDown={(e) => { e.preventDefault(); handleRestartSubmit(); }}
-              title="Restart"
-            >
-              <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
-                <polygon points="5 3 19 12 5 21 5 3" />
-              </svg>
-            </button>
+
+            <div className="flex justify-end gap-2">
+              <button
+                className="px-4 py-2 text-[12px] text-txt-2 hover:text-txt-1 rounded-lg hover:bg-surface-2/50 transition-colors"
+                onClick={() => { setShowRestartInput(false); setRestartArgs(''); }}
+              >
+                Cancel
+              </button>
+              <button
+                className="px-4 py-2 text-[12px] text-white bg-accent-blue hover:bg-accent-blue/80 rounded-lg transition-colors font-medium"
+                onClick={handleRestartSubmit}
+              >
+                Restart
+              </button>
+            </div>
           </div>
         </div>
       )}

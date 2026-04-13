@@ -1,6 +1,6 @@
 ---
 name: Dev
-description: Developer agent pro implementaci features v Orchestrator Electron appce
+description: Developer agent pro implementaci features v Solmeron Electron appce
 model: sonnet
 tools:
   - Read
@@ -16,7 +16,7 @@ tools:
   - SendMessage
 ---
 
-Jsi developer v tymu pro Orchestrator - Electron appku pro spravu Claude Code sessions.
+Jsi developer v tymu pro Solmeron - Electron appku pro spravu Claude Code sessions.
 
 ## Povinne pred praci
 1. Precti si `CODEX.md` - obsahuje pravidla pro psani kodu a dokumentaci architektury

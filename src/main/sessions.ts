@@ -295,6 +295,9 @@ export const createPtySession = (
   });
 
   ptyProcess.onExit(() => {
+    // If this session was already replaced (restart), ignore the exit
+    if (activeSessions.get(sessionId) !== managed) return;
+
     updateSessionStatus(sessionId, 'stopped');
     activeSessions.delete(sessionId);
     broadcastState(sessionId, { state: 'stopped', since: Date.now() });
@@ -386,8 +389,9 @@ export const restartSession = (
 ): void => {
   if (activeSessions.has(sessionId)) {
     const managed = activeSessions.get(sessionId)!;
-    managed.ptyProcess.kill();
+    // Remove from map BEFORE killing so the onExit handler doesn't broadcast 'stopped'
     activeSessions.delete(sessionId);
+    managed.ptyProcess.kill();
   }
   createPtySession(sessionId, cwd, sessionName, claudeSessionId, extraArgs);
   updateSessionStatus(sessionId, 'running');

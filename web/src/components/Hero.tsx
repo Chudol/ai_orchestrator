@@ -85,7 +85,7 @@ export default function Hero({ onImageClick }: Props) {
         >
           <img
             src="./assets/main.png"
-            alt="Orchestrator - Main view with Claude Code session"
+            alt="Solmeron - Main view with Claude Code session"
             className="w-full block"
             loading="eager"
           />

@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useSettingsStore } from '../stores/settingsStore';
-import { StatusOption } from '@shared/types';
+import { StatusOption, UpdateStatus } from '@shared/types';
 
 const STATUS_COLORS = ['gray', 'blue', 'yellow', 'green', 'red', 'purple', 'orange', 'pink', 'cyan'];
 
@@ -21,9 +21,12 @@ export const SettingsPanel = (): JSX.Element => {
   const [localOptions, setLocalOptions] = useState<StatusOption[]>([]);
   const [dragIdx, setDragIdx] = useState<number | null>(null);
   const [dragOverIdx, setDragOverIdx] = useState<number | null>(null);
+  const [updateStatus, setUpdateStatus] = useState<UpdateStatus>({ state: 'up-to-date' });
 
   useEffect(() => {
     loadSettings();
+    window.api.updaterGetStatus().then(setUpdateStatus);
+    return window.api.onUpdaterStatus(setUpdateStatus);
   }, [loadSettings]);
 
   useEffect(() => {
@@ -79,7 +82,7 @@ export const SettingsPanel = (): JSX.Element => {
     <div className="flex-1 overflow-y-auto custom-scrollbar p-4">
       <div className="max-w-lg mx-auto">
         <h2 className="text-sm font-semibold text-txt-1 mb-1">Settings</h2>
-        <p className="text-[11px] text-txt-3 mb-6">Configure your Orchestrator preferences.</p>
+        <p className="text-[11px] text-txt-3 mb-6">Configure your Solmeron preferences.</p>
 
         {/* Status Options */}
         <div className="mb-6">
@@ -155,6 +158,60 @@ export const SettingsPanel = (): JSX.Element => {
           {localOptions.length === 0 && (
             <p className="text-[11px] text-txt-3 text-center py-4">No statuses defined. Click &quot;+ Add status&quot; to create one.</p>
           )}
+        </div>
+
+        {/* Updates */}
+        <div className="mb-6">
+          <h3 className="text-xs font-semibold text-txt-2 uppercase tracking-wider mb-3">Updates</h3>
+          <div className="px-3 py-3 rounded-lg bg-surface-1/50 border border-transparent">
+            {updateStatus.state === 'up-to-date' && (
+              <div className="flex items-center justify-between">
+                <span className="text-[12px] text-txt-2">You&apos;re up to date</span>
+                <button
+                  className="text-[11px] text-accent-blue hover:text-accent-blue/80 transition-colors"
+                  onClick={() => window.api.updaterCheck()}
+                >
+                  Check for updates
+                </button>
+              </div>
+            )}
+            {updateStatus.state === 'checking' && (
+              <span className="text-[12px] text-txt-3">Checking for updates...</span>
+            )}
+            {updateStatus.state === 'available' && (
+              <span className="text-[12px] text-txt-2">Downloading v{updateStatus.version}...</span>
+            )}
+            {updateStatus.state === 'downloading' && (
+              <div>
+                <span className="text-[12px] text-txt-2">Downloading v{updateStatus.version}... {updateStatus.percent}%</span>
+                <div className="mt-1.5 h-1 rounded-full bg-surface-2 overflow-hidden">
+                  <div className="h-full bg-accent-blue rounded-full transition-all" style={{ width: `${updateStatus.percent}%` }} />
+                </div>
+              </div>
+            )}
+            {updateStatus.state === 'ready' && (
+              <div className="flex items-center justify-between">
+                <span className="text-[12px] text-green-400">v{updateStatus.version} ready to install</span>
+                <button
+                  className="text-[11px] font-medium text-green-400 hover:text-green-300 transition-colors"
+                  onClick={() => window.api.updaterInstall()}
+                >
+                  Restart &amp; Update
+                </button>
+              </div>
+            )}
+            {updateStatus.state === 'error' && (
+              <div className="flex items-center justify-between">
+                <span className="text-[12px] text-red-400">Update error</span>
+                <button
+                  className="text-[11px] text-accent-blue hover:text-accent-blue/80 transition-colors"
+                  onClick={() => window.api.updaterCheck()}
+                >
+                  Retry
+                </button>
+              </div>
+            )}
+          </div>
         </div>
       </div>
     </div>

@@ -182,7 +182,7 @@ export const App = (): JSX.Element => {
 
         {/* Title */}
         <span className="gradient-text text-xs font-bold tracking-wider uppercase flex-1 text-center">
-          Orchestrator
+          Solmeron
         </span>
 
         {/* Sound toggle */}

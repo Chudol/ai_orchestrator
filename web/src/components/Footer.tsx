@@ -4,9 +4,9 @@ export default function Footer() {
       <div className="max-w-6xl mx-auto flex flex-col md:flex-row items-center justify-between gap-4">
         <div className="flex items-center gap-2">
           <div className="w-6 h-6 rounded-md bg-gradient-to-br from-blue-500 to-purple-600 flex items-center justify-center">
-            <span className="text-white text-xs font-bold">O</span>
+            <span className="text-white text-xs font-bold">S</span>
           </div>
-          <span className="text-sm font-semibold text-gray-300">Orchestrator</span>
+          <span className="text-sm font-semibold text-gray-300">Solmeron</span>
         </div>
 
         <p className="text-xs text-gray-500">

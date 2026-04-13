@@ -2,8 +2,14 @@ import { app, BrowserWindow, dialog, shell } from 'electron';
 import { join } from 'path';
 import { execSync } from 'child_process';
 
-// In dev mode, use a separate data directory to avoid conflicts with production.
-// Must happen before any module that initializes electron-store.
+// Keep userData in the original "orchestrator" directory to preserve existing config/data
+// after the rename to Solmeron. Covers both dev (lowercase from package.json name)
+// and packaged (capitalized from productName) paths.
+const userDataBase = app.getPath('userData');
+if (userDataBase.endsWith('solmeron') || userDataBase.endsWith('Solmeron')) {
+  app.setPath('userData', userDataBase.replace(/[Ss]olmeron$/, (m) => m[0] === 'S' ? 'Orchestrator' : 'orchestrator'));
+}
+
 if (!app.isPackaged) {
   app.setPath('userData', join(app.getPath('userData'), 'dev'));
 }
@@ -48,6 +54,7 @@ async function main(): Promise<void> {
   const { cleanupAllTerminals, getActiveTerminalCount } = await import('./terminals');
   const { resetAllSessionStatuses } = await import('./store');
   const { registerDemoHandlers, cleanupDemo } = await import('./demo');
+  const { initAutoUpdater } = await import('./updater');
 
   const isDemo = process.env.DEMO_MODE === '1';
 
@@ -118,6 +125,7 @@ async function main(): Promise<void> {
     registerIpcHandlers();
   }
   createWindow();
+  initAutoUpdater();
 
   app.on('activate', () => {
     if (BrowserWindow.getAllWindows().length === 0) {

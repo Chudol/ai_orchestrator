@@ -54,6 +54,10 @@ export const IPC_CHANNELS = {
   SETTINGS_GET_SESSION_STATUS: 'settings:get-session-status',
   SETTINGS_SET_SESSION_STATUS: 'settings:set-session-status',
   SETTINGS_GET_ALL_SESSION_STATUSES: 'settings:get-all-session-statuses',
+  UPDATER_CHECK: 'updater:check',
+  UPDATER_INSTALL: 'updater:install',
+  UPDATER_GET_STATUS: 'updater:get-status',
+  UPDATER_STATUS_CHANGED: 'updater:status-changed',
 } as const;
 
 export type IpcChannel = typeof IPC_CHANNELS[keyof typeof IPC_CHANNELS];

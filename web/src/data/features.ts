@@ -41,7 +41,7 @@ export const features: Feature[] = [
     title: 'Claude Configuration',
     subtitle: 'Skills, agents, and MCP servers at a glance',
     description:
-      'View and manage your Claude setup directly from Orchestrator. Browse project and global skills, configure AI agents with different models, and manage MCP server connections \u2014 all with the ability to open and edit config files in place.',
+      'View and manage your Claude setup directly from Solmeron. Browse project and global skills, configure AI agents with different models, and manage MCP server connections \u2014 all with the ability to open and edit config files in place.',
     image: './assets/claude.png',
     highlights: [
       'Project & global skills overview',

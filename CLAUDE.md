@@ -1,10 +1,10 @@
-# Orchestrator - Claude Code Session Manager
+# Solmeron - AI Orchestrator
 
 Electron aplikace pro spravu vice Claude Code sessions pres ruzne projekty v jednom okne.
 
 ## O projektu
 
-Orchestrator je desktop appka (Electron + React + TypeScript), ktera umoznuje:
+Solmeron je desktop appka (Electron + React + TypeScript), ktera umoznuje:
 - Pridat lokalni projekty (cesta k repu/slozce)
 - Spoustet Claude Code sessions uvnitr projektu
 - Prepinat mezi sessions bez nutnosti mit vice terminalu/monitoru

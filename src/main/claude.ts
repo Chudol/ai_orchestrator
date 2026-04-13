@@ -240,7 +240,7 @@ export const mcpListTools = (command: string, args: string[], env: Record<string
     sendJsonLine('initialize', {
       protocolVersion: '2024-11-05',
       capabilities: {},
-      clientInfo: { name: 'orchestrator', version: '1.0.0' },
+      clientInfo: { name: 'solmeron', version: '1.0.0' },
     });
   });
 };

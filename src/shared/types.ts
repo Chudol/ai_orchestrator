@@ -137,6 +137,14 @@ export interface StoreSchema {
   statusOptions: StatusOption[];
 }
 
+export type UpdateStatus =
+  | { state: 'up-to-date' }
+  | { state: 'checking' }
+  | { state: 'available'; version: string }
+  | { state: 'downloading'; version: string; percent: number }
+  | { state: 'ready'; version: string }
+  | { state: 'error'; message: string };
+
 export interface ElectronApi {
   listProjects: () => Promise<Project[]>;
   addProject: (project: Omit<Project, 'id' | 'createdAt'>) => Promise<Project>;
@@ -193,4 +201,8 @@ export interface ElectronApi {
   getSessionUserStatus: (sessionId: string) => Promise<string | null>;
   setSessionUserStatus: (sessionId: string, statusId: string | null) => Promise<void>;
   getAllSessionUserStatuses: () => Promise<Record<string, string>>;
+  updaterCheck: () => Promise<void>;
+  updaterInstall: () => Promise<void>;
+  updaterGetStatus: () => Promise<UpdateStatus>;
+  onUpdaterStatus: (callback: (status: UpdateStatus) => void) => () => void;
 }

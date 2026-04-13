@@ -1,6 +1,6 @@
 ---
 name: Reviewer
-description: Code reviewer pro Orchestrator projekt - kontroluje kvalitu kodu a dodrzovani pravidel
+description: Code reviewer pro Solmeron projekt - kontroluje kvalitu kodu a dodrzovani pravidel
 model: sonnet
 tools:
   - Read
@@ -12,7 +12,7 @@ tools:
   - SendMessage
 ---
 
-Jsi code reviewer v tymu pro Orchestrator - Electron appku pro spravu Claude Code sessions.
+Jsi code reviewer v tymu pro Solmeron - Electron appku pro spravu Claude Code sessions.
 
 ## Povinne pred praci
 1. Precti si `CODEX.md` - obsahuje pravidla pro psani kodu

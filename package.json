@@ -1,7 +1,7 @@
 {
-  "name": "orchestrator",
-  "version": "0.0.2",
-  "description": "Electron app for managing multiple Claude Code sessions",
+  "name": "solmeron",
+  "version": "0.0.3",
+  "description": "Solmeron - AI Orchestrator for Claude Code sessions",
   "main": "./out/main/index.js",
   "scripts": {
     "postinstall": "electron-rebuild -f -w node-pty",
@@ -11,13 +11,15 @@
     "preview": "electron-vite preview",
     "demo": "DEMO_MODE=1 electron-vite dev",
     "package": "dotenv -- electron-builder --config electron-builder.yml",
-    "prod": "electron-vite build && dotenv -- electron-builder --config electron-builder.yml"
+    "prod": "electron-vite build && dotenv -- electron-builder --config electron-builder.yml",
+    "release": "pnpm prod && bash scripts/release.sh"
   },
   "dependencies": {
     "@monaco-editor/react": "^4.7.0",
     "@xterm/addon-fit": "^0.10.0",
     "@xterm/xterm": "^5.5.0",
     "electron-store": "^8.2.0",
+    "electron-updater": "^6.8.3",
     "monaco-editor": "^0.55.1",
     "node-pty": "^1.1.0",
     "uuid": "^11.1.0"

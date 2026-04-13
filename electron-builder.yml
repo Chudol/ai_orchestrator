@@ -1,21 +1,28 @@
-appId: com.orchestrator.app
-productName: Orchestrator
+appId: com.solmeron.app
+productName: Solmeron
 directories:
   buildResources: build
   output: release
 files:
   - out/**/*
   - "!out/renderer/**/*"
+  - "!web${/*}"
 extraResources:
   - from: out/renderer
     to: renderer
+publish:
+  provider: github
+  owner: Chudol
+  repo: solmeron_release
 mac:
   category: public.app-category.developer-tools
   target:
     - target: dmg
       arch:
         - arm64
-        - x64
+    - target: zip
+      arch:
+        - arm64
   hardenedRuntime: true
   gatekeeperAssess: false
   entitlements: build/entitlements.mac.plist
@@ -23,4 +30,4 @@ mac:
   notarize: true
 dmg:
   sign: true
-npmRebuild: true
+npmRebuild: false

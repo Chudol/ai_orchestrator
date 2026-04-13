@@ -1,10 +1,25 @@
 # Changelog
 
-All notable changes to Orchestrator are documented in this file.
+All notable changes to Solmeron are documented in this file.
 
 Format based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## [Unreleased]
+
+## [0.0.3] - 2026-04-13
+
+### Changed
+- Rename app from Orchestrator to Solmeron across entire codebase (UI, config, agents, web, docs)
+- Keep userData path as "Orchestrator" for backward compatibility with existing production config
+- Update appId to com.solmeron.app
+- Add zip target to electron-builder for future auto-updates
+- Configure publish provider pointing to Chudol/solmeron_release
+
+### Added
+- Auto-updater (electron-updater) — checks GitHub releases on launch + every 30 min
+- Release script (`pnpm release`) for uploading builds to Chudol/solmeron_release
+- Update section in Settings panel with check/download progress/install button
+- Auto-updater broadcasts status to renderer via IPC
 
 ## [0.0.2] - 2026-04-13
 

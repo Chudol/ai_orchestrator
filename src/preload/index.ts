@@ -100,6 +100,16 @@ const api: ElectronApi = {
   getSessionUserStatus: (sessionId) => ipcRenderer.invoke(IPC_CHANNELS.SETTINGS_GET_SESSION_STATUS, sessionId),
   setSessionUserStatus: (sessionId, statusId) => ipcRenderer.invoke(IPC_CHANNELS.SETTINGS_SET_SESSION_STATUS, sessionId, statusId),
   getAllSessionUserStatuses: () => ipcRenderer.invoke(IPC_CHANNELS.SETTINGS_GET_ALL_SESSION_STATUSES),
+  updaterCheck: () => ipcRenderer.invoke(IPC_CHANNELS.UPDATER_CHECK),
+  updaterInstall: () => ipcRenderer.invoke(IPC_CHANNELS.UPDATER_INSTALL),
+  updaterGetStatus: () => ipcRenderer.invoke(IPC_CHANNELS.UPDATER_GET_STATUS),
+  onUpdaterStatus: (callback) => {
+    const handler = (_event: Electron.IpcRendererEvent, status: import('@shared/types').UpdateStatus): void => {
+      callback(status);
+    };
+    ipcRenderer.on(IPC_CHANNELS.UPDATER_STATUS_CHANGED, handler);
+    return () => ipcRenderer.removeListener(IPC_CHANNELS.UPDATER_STATUS_CHANGED, handler);
+  },
 };
 
 contextBridge.exposeInMainWorld('api', api);
