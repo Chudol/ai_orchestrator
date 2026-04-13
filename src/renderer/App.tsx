@@ -14,6 +14,7 @@ import { ClaudePanel } from './components/ClaudePanel';
 import { GitPanel } from './components/GitPanel';
 import { McpServerModal } from './components/McpServerModal';
 import { SettingsPanel } from './components/SettingsPanel';
+import { PatchNotesPanel } from './components/PatchNotesPanel';
 import { VersionBadge } from './components/VersionBadge';
 import { useSettingsStore } from './stores/settingsStore';
 
@@ -24,6 +25,7 @@ const tabs = [
   { key: 'claude', label: 'Claude', icon: 'M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z' },
   { key: 'git', label: 'Git', icon: 'M7 8h10M7 12h4m1 8l-4-4H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-3l-4 4z' },
   { key: 'settings', label: 'Settings', icon: 'M12 6V4m0 2a2 2 0 100 4m0-4a2 2 0 110 4m-6 8a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4m6 6v10m6-2a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4' },
+  { key: 'patchnotes', label: 'Patch Notes', icon: 'M11 5.882V19.24a1.76 1.76 0 01-3.417.592l-2.147-6.15M18 13a3 3 0 100-6M5.436 13.683A4.001 4.001 0 017 6h1.832c4.1 0 7.625-1.234 9.168-3v14c-1.543-1.766-5.067-3-9.168-3H7a3.988 3.988 0 01-1.564-.317z' },
 ] as const;
 
 export const App = (): JSX.Element => {
@@ -39,6 +41,8 @@ export const App = (): JSX.Element => {
   const toggleGitPanel = useGitStore((s) => s.toggleGitPanel);
   const settingsPanelOpen = useSettingsStore((s) => s.settingsPanelOpen);
   const toggleSettingsPanel = useSettingsStore((s) => s.toggleSettingsPanel);
+  const patchNotesPanelOpen = useSettingsStore((s) => s.patchNotesPanelOpen);
+  const togglePatchNotesPanel = useSettingsStore((s) => s.togglePatchNotesPanel);
   const loadSettings = useSettingsStore((s) => s.loadSettings);
   const openFiles = useActiveOpenFiles();
   const terminals = useActiveTerminals();
@@ -128,6 +132,7 @@ export const App = (): JSX.Element => {
       case 'commands': return commandsPanelOpen;
       case 'claude': return claudePanelOpen;
       case 'git': return gitPanelOpen;
+      case 'patchnotes': return patchNotesPanelOpen;
       case 'settings': return settingsPanelOpen;
       default: return false;
     }
@@ -139,15 +144,19 @@ export const App = (): JSX.Element => {
       case 'commands': toggleCommandsPanel(); break;
       case 'terminal': createTerminalTab(); break;
       case 'claude':
-        if (!claudePanelOpen) { if (gitPanelOpen) toggleGitPanel(); if (settingsPanelOpen) toggleSettingsPanel(); }
+        if (!claudePanelOpen) { if (gitPanelOpen) toggleGitPanel(); if (settingsPanelOpen) toggleSettingsPanel(); if (patchNotesPanelOpen) togglePatchNotesPanel(); }
         toggleClaudePanel();
         break;
       case 'git':
-        if (!gitPanelOpen) { if (claudePanelOpen) toggleClaudePanel(); if (settingsPanelOpen) toggleSettingsPanel(); }
+        if (!gitPanelOpen) { if (claudePanelOpen) toggleClaudePanel(); if (settingsPanelOpen) toggleSettingsPanel(); if (patchNotesPanelOpen) togglePatchNotesPanel(); }
         toggleGitPanel();
         break;
+      case 'patchnotes':
+        if (!patchNotesPanelOpen) { if (claudePanelOpen) toggleClaudePanel(); if (gitPanelOpen) toggleGitPanel(); if (settingsPanelOpen) toggleSettingsPanel(); }
+        togglePatchNotesPanel();
+        break;
       case 'settings':
-        if (!settingsPanelOpen) { if (claudePanelOpen) toggleClaudePanel(); if (gitPanelOpen) toggleGitPanel(); }
+        if (!settingsPanelOpen) { if (claudePanelOpen) toggleClaudePanel(); if (gitPanelOpen) toggleGitPanel(); if (patchNotesPanelOpen) togglePatchNotesPanel(); }
         toggleSettingsPanel();
         break;
     }
@@ -218,10 +227,12 @@ export const App = (): JSX.Element => {
 
       {/* Main content */}
       <div className="flex flex-1 overflow-hidden">
-        {fileBrowserOpen && !claudePanelOpen && !gitPanelOpen && !settingsPanelOpen && <FileBrowser />}
-        {commandsPanelOpen && !claudePanelOpen && !gitPanelOpen && !settingsPanelOpen && <CommandsPanel />}
+        {fileBrowserOpen && !claudePanelOpen && !gitPanelOpen && !settingsPanelOpen && !patchNotesPanelOpen && <FileBrowser />}
+        {commandsPanelOpen && !claudePanelOpen && !gitPanelOpen && !settingsPanelOpen && !patchNotesPanelOpen && <CommandsPanel />}
         {settingsPanelOpen ? (
           <SettingsPanel />
+        ) : patchNotesPanelOpen ? (
+          <PatchNotesPanel />
         ) : claudePanelOpen ? (
           <ClaudePanel />
         ) : gitPanelOpen ? (

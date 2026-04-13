@@ -57,19 +57,8 @@ src/
 2. **Kategorie** — pouzivej `### Added`, `### Changed`, `### Fixed`, `### Removed` pod Unreleased sekci
 3. **Format zaznamu** — kratky popis zmeny v anglictine, kazdy zaznam na novem radku s `- ` prefixem
 
-### Pravidla pro commit
-Kdyz uzivatel chce commitnout zmeny (rekne "commitni", "udelej commit", pouzije /commit apod.), agent MUSI pred samotnym commitem provest:
-
-1. **Zkontroluj Unreleased sekci** v `changelog.md` — pokud je prazdna, upozorni uzivatele a nech ho doplnit
-2. **Bump patch verze** — precti `"version"` z `package.json`, zvys PATCH o 1 (napr. 0.0.1 -> 0.0.2)
-3. **Updatuj `changelog.md`**:
-   - Obsah `## [Unreleased]` presun pod novou hlavicku `## [NOVA_VERZE] - YYYY-MM-DD`
-   - Sekci `## [Unreleased]` vyprazdni (nech jen hlavicku a prazdny radek)
-4. **Updatuj `package.json`** — nastav `"version"` na novou verzi
-5. **Staguj** `changelog.md` a `package.json` spolecne s ostatnimi zmenami
-6. Pak teprve navrhni/proved commit
-
-**Nikdy nerucne menit verzi** v `package.json` mimo commit workflow.
+### Release
+Verze se bumpuje pres `/patch` skill — ten zaroven generuje user-friendly patch notes z changelogu. **Nikdy rucne nemenit verzi v `package.json`.**
 
 ## Jak spoustet
 

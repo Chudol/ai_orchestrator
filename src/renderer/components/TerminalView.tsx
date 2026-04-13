@@ -146,12 +146,13 @@ export const TerminalView = (): JSX.Element => {
     if (!sessionId || !e.dataTransfer.files.length) return;
 
     const paths = Array.from(e.dataTransfer.files)
-      .map((f) => (f as File & { path: string }).path)
-      .filter(Boolean)
-      .map((p) => (p.includes(' ') ? `"${p}"` : p));
+      .map((f) => window.api.getPathForFile(f))
+      .filter(Boolean);
 
     if (paths.length > 0) {
-      window.api.sendInput(sessionId, paths.join(' '));
+      const text = paths.map((p) => (p.includes(' ') ? `"${p}"` : p)).join(' ');
+      // Wrap in bracketed paste mode so Claude Code recognizes it as pasted content
+      window.api.sendInput(sessionId, `\x1b[200~${text}\x1b[201~`);
     }
   }, []);
 

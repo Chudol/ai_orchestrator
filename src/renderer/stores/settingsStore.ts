@@ -4,6 +4,8 @@ import { StatusOption } from '@shared/types';
 interface SettingsState {
   settingsPanelOpen: boolean;
   toggleSettingsPanel: () => void;
+  patchNotesPanelOpen: boolean;
+  togglePatchNotesPanel: () => void;
   statusOptions: StatusOption[];
   sessionUserStatuses: Map<string, string>; // sessionId -> statusOptionId
   loadSettings: () => Promise<void>;
@@ -13,11 +15,16 @@ interface SettingsState {
 
 export const useSettingsStore = create<SettingsState>((set, get) => ({
   settingsPanelOpen: false,
+  patchNotesPanelOpen: false,
   statusOptions: [],
   sessionUserStatuses: new Map(),
 
   toggleSettingsPanel: () => {
     set((state) => ({ settingsPanelOpen: !state.settingsPanelOpen }));
+  },
+
+  togglePatchNotesPanel: () => {
+    set((state) => ({ patchNotesPanelOpen: !state.patchNotesPanelOpen }));
   },
 
   loadSettings: async () => {

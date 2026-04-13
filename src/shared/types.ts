@@ -205,4 +205,5 @@ export interface ElectronApi {
   updaterInstall: () => Promise<void>;
   updaterGetStatus: () => Promise<UpdateStatus>;
   onUpdaterStatus: (callback: (status: UpdateStatus) => void) => () => void;
+  getPathForFile: (file: File) => string;
 }

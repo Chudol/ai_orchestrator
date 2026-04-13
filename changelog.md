@@ -6,6 +6,18 @@ Format based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## [Unreleased]
 
+### Added
+- Patch Notes panel in titlebar with collapsible version cards (major/minor changes)
+- /patch skill for version bumping and user-friendly patch notes generation
+- Patch notes data file (patchNotes.ts) with curated entries for all versions
+
+### Fixed
+- File drag and drop into terminal now uses webUtils.getPathForFile() instead of deprecated File.path (Electron 35+)
+
+### Changed
+- Removed version bump logic from commit workflow — now handled by /patch skill
+- Updated CLAUDE.md versioning rules to reference /patch
+
 ## [0.0.3] - 2026-04-13
 
 ### Changed
