@@ -59,7 +59,7 @@ export default function Hero({ onImageClick }: Props) {
         className="mt-8 flex gap-4"
       >
         <a
-          href="https://github.com"
+          href="https://github.com/Chudol/solmeron_release/releases/latest/download/Solmeron-arm64.dmg"
           target="_blank"
           rel="noopener noreferrer"
           className="group relative inline-flex items-center gap-2 px-7 py-3 rounded-xl bg-gradient-to-r from-blue-600 to-purple-600 text-white font-semibold text-sm md:text-base transition-all hover:shadow-lg hover:shadow-blue-500/25 hover:scale-105 active:scale-100"

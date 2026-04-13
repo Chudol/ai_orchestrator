@@ -1,0 +1,17 @@
+services:
+  web:
+    build: .
+    ports:
+      - "8080:80"
+    restart: unless-stopped
+    networks:
+      - proxy
+      - internal
+
+networks:
+  proxy:
+    external: true
+    name: drivelcom-admin_proxy
+  internal:
+    external: true
+    name: drivelcom-admin_internal

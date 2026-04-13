@@ -15,7 +15,7 @@ export default function Footer() {
 
         <div className="flex items-center gap-4">
           <a
-            href="https://github.com"
+            href="https://github.com/Chudol/solmeron_release/releases/latest/download/Solmeron-arm64.dmg"
             target="_blank"
             rel="noopener noreferrer"
             className="text-gray-500 hover:text-gray-300 transition-colors"

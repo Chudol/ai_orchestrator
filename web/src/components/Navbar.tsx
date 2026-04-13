@@ -37,7 +37,7 @@ export default function Navbar() {
             Features
           </button>
           <a
-            href="https://github.com"
+            href="https://github.com/Chudol/solmeron_release/releases/latest/download/Solmeron-arm64.dmg"
             target="_blank"
             rel="noopener noreferrer"
             className="text-sm px-4 py-2 rounded-lg bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-500 hover:to-purple-500 text-white font-medium transition-all"
@@ -68,9 +68,7 @@ export default function Navbar() {
             Features
           </button>
           <a
-            href="https://github.com"
-            target="_blank"
-            rel="noopener noreferrer"
+            href="https://github.com/Chudol/solmeron_release/releases/latest/download/Solmeron-arm64.dmg"
             className="text-sm text-center px-4 py-2 rounded-lg bg-gradient-to-r from-blue-600 to-purple-600 text-white font-medium"
           >
             Download
