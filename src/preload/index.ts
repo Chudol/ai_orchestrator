@@ -15,6 +15,7 @@ const api: ElectronApi = {
   renameSession: (sessionId, name) => ipcRenderer.invoke(IPC_CHANNELS.SESSIONS_RENAME, sessionId, name),
   deleteSession: (sessionId) => ipcRenderer.invoke(IPC_CHANNELS.SESSIONS_DELETE, sessionId),
   reorderSessions: (projectId, orderedIds) => ipcRenderer.invoke(IPC_CHANNELS.SESSIONS_REORDER, projectId, orderedIds),
+  restartSession: (sessionId, extraArgs) => ipcRenderer.invoke(IPC_CHANNELS.SESSIONS_RESTART, sessionId, extraArgs),
   trackRepo: (projectId, dirPath) => ipcRenderer.invoke(IPC_CHANNELS.PROJECTS_TRACK_REPO, projectId, dirPath),
   untrackRepo: (projectId, dirPath) => ipcRenderer.invoke(IPC_CHANNELS.PROJECTS_UNTRACK_REPO, projectId, dirPath),
   getTrackedRepoPaths: (projectId) => ipcRenderer.invoke(IPC_CHANNELS.PROJECTS_TRACKED_PATHS, projectId),

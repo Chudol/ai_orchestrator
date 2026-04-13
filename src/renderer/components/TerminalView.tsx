@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useRef, useState, useCallback } from 'react';
 import { Terminal } from '@xterm/xterm';
 import { FitAddon } from '@xterm/addon-fit';
 import '@xterm/xterm/css/xterm.css';
@@ -124,7 +124,36 @@ export const TerminalView = (): JSX.Element => {
   const trackedRepos = useActiveTrackedRepos();
   const refreshBranches = useAppStore((s) => s.refreshTrackedRepoBranches);
   const [reposVisible, setReposVisible] = useState(true);
+  const [isDragOver, setIsDragOver] = useState(false);
   const prevSessionIdRef = useRef<string | null>(null);
+
+  const handleDragOver = useCallback((e: React.DragEvent) => {
+    if (e.dataTransfer.types.includes('Files') && activeSessionId) {
+      e.preventDefault();
+      e.dataTransfer.dropEffect = 'copy';
+      setIsDragOver(true);
+    }
+  }, [activeSessionId]);
+
+  const handleDragLeave = useCallback(() => {
+    setIsDragOver(false);
+  }, []);
+
+  const handleDrop = useCallback((e: React.DragEvent) => {
+    e.preventDefault();
+    setIsDragOver(false);
+    const sessionId = prevSessionIdRef.current;
+    if (!sessionId || !e.dataTransfer.files.length) return;
+
+    const paths = Array.from(e.dataTransfer.files)
+      .map((f) => (f as File & { path: string }).path)
+      .filter(Boolean)
+      .map((p) => (p.includes(' ') ? `"${p}"` : p));
+
+    if (paths.length > 0) {
+      window.api.sendInput(sessionId, paths.join(' '));
+    }
+  }, []);
 
   useEffect(() => {
     const terminal = new Terminal({
@@ -282,8 +311,18 @@ export const TerminalView = (): JSX.Element => {
   }, [activeSessionId, trackedRepos.length, refreshBranches]);
 
   return (
-    <div className="w-full h-full overflow-hidden relative bg-[#080c16]">
+    <div
+      className="w-full h-full overflow-hidden relative bg-[#080c16]"
+      onDragOver={handleDragOver}
+      onDragLeave={handleDragLeave}
+      onDrop={handleDrop}
+    >
       <div ref={containerRef} className={`w-full h-full p-2 ${!activeSessionId ? 'hidden' : ''}`} />
+      {isDragOver && (
+        <div className="absolute inset-0 bg-accent-blue/10 border-2 border-dashed border-accent-blue/40 rounded-lg flex items-center justify-center z-20 pointer-events-none">
+          <span className="text-accent-blue text-sm font-medium">Drop file to paste path</span>
+        </div>
+      )}
       {activeSessionId && (
         <div className="absolute top-2 right-3 text-[10px] font-mono z-10 flex flex-col items-end gap-1.5 pointer-events-auto">
           <div className="flex items-center gap-1">

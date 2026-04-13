@@ -49,13 +49,16 @@ export const SessionItem = ({ session, isActive, isDragOver, onDragStart, onDrag
   const [isEditing, setIsEditing] = useState(false);
   const [editName, setEditName] = useState(session.name);
   const [elapsed, setElapsed] = useState(0);
+  const [showRestartInput, setShowRestartInput] = useState(false);
+  const [restartArgs, setRestartArgs] = useState('');
+  const restartInputRef = useRef<HTMLInputElement>(null);
   const [contextMenu, setContextMenu] = useState<{ x: number; y: number } | null>(null);
   const [menuPos, setMenuPos] = useState<{ left: number; top: number }>({ left: 0, top: 0 });
   const [statusSubmenu, setStatusSubmenu] = useState(false);
   const [submenuPos, setSubmenuPos] = useState<{ left?: number; right?: number; top: number }>({ top: 0 });
   const menuRef = useRef<HTMLDivElement>(null);
   const submenuRef = useRef<HTMLDivElement>(null);
-  const { setActiveSession, stopSession, deleteSession, renameSession, sessionStates } = useAppStore();
+  const { setActiveSession, stopSession, deleteSession, renameSession, restartSession, sessionStates, sessionClaudeIds } = useAppStore();
   const isUnread = useAppStore((s) => s.unreadSessions.has(session.id));
   const { statusOptions, sessionUserStatuses, setSessionUserStatus } = useSettingsStore();
 
@@ -170,6 +173,21 @@ export const SessionItem = ({ session, isActive, isDragOver, onDragStart, onDrag
     e.stopPropagation();
     stopSession(session.id);
   };
+
+  const claudeId = sessionClaudeIds.get(session.id) ?? null;
+
+  const handleRestartSubmit = (): void => {
+    const args = restartArgs.trim();
+    restartSession(session.id, args);
+    setShowRestartInput(false);
+    setRestartArgs('');
+  };
+
+  useEffect(() => {
+    if (showRestartInput) {
+      requestAnimationFrame(() => restartInputRef.current?.focus());
+    }
+  }, [showRestartInput]);
 
   const handleContextMenu = (e: React.MouseEvent): void => {
     e.preventDefault();
@@ -293,8 +311,8 @@ export const SessionItem = ({ session, isActive, isDragOver, onDragStart, onDrag
                 ref={submenuRef}
                 className="absolute glass rounded-xl shadow-xl py-1 z-50 min-w-[140px]"
                 style={{
-                  ...(submenuPos.left !== undefined ? { left: submenuPos.left } : {}),
-                  ...(submenuPos.right !== undefined ? { right: submenuPos.right } : {}),
+                  ...(submenuPos.left !== undefined ? { left: submenuPos.left, paddingLeft: 4, marginLeft: -4 } : {}),
+                  ...(submenuPos.right !== undefined ? { right: submenuPos.right, paddingRight: 4, marginRight: -4 } : {}),
                   top: submenuPos.top,
                 }}
               >
@@ -361,6 +379,23 @@ export const SessionItem = ({ session, isActive, isDragOver, onDragStart, onDrag
             </button>
           )}
 
+          {/* Restart with args */}
+          <button
+            className="w-full px-4 py-2 text-left text-[12px] text-txt-1 hover:bg-surface-2/50 transition-colors flex items-center gap-2"
+            onClick={() => {
+              setContextMenu(null);
+              setRestartArgs('');
+              setShowRestartInput(true);
+            }}
+          >
+            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="text-txt-3">
+              <polyline points="23 4 23 10 17 10" /><path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10" />
+            </svg>
+            Restart with args...
+          </button>
+
+          <div className="border-t border-border-subtle my-1" />
+
           {/* Close/delete session */}
           <button
             className="w-full px-4 py-2 text-left text-[12px] text-red-400 hover:bg-surface-2/50 transition-colors flex items-center gap-2"
@@ -374,6 +409,38 @@ export const SessionItem = ({ session, isActive, isDragOver, onDragStart, onDrag
             </svg>
             Close session
           </button>
+        </div>
+      )}
+
+      {/* Inline restart args input */}
+      {showRestartInput && (
+        <div className="px-2.5 pb-2">
+          <div className="flex items-center gap-1 glass rounded-lg px-2 py-1.5">
+            <span className="text-[10px] text-txt-3 font-mono whitespace-nowrap flex-shrink-0">
+              claude{claudeId ? ` --resume ${claudeId}` : ''}
+            </span>
+            <input
+              ref={restartInputRef}
+              className="flex-1 bg-transparent text-[10px] text-txt-1 font-mono outline-none min-w-0 placeholder:text-txt-3/50"
+              value={restartArgs}
+              onChange={(e) => setRestartArgs(e.target.value)}
+              onKeyDown={(e) => {
+                if (e.key === 'Enter') handleRestartSubmit();
+                if (e.key === 'Escape') { setShowRestartInput(false); setRestartArgs(''); }
+              }}
+              onBlur={() => { setShowRestartInput(false); setRestartArgs(''); }}
+              placeholder="--chrome ..."
+            />
+            <button
+              className="text-txt-3 hover:text-accent-blue p-0.5 transition-colors flex-shrink-0"
+              onMouseDown={(e) => { e.preventDefault(); handleRestartSubmit(); }}
+              title="Restart"
+            >
+              <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
+                <polygon points="5 3 19 12 5 21 5 3" />
+              </svg>
+            </button>
+          </div>
         </div>
       )}
     </>

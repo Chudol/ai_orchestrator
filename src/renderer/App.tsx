@@ -14,6 +14,7 @@ import { ClaudePanel } from './components/ClaudePanel';
 import { GitPanel } from './components/GitPanel';
 import { McpServerModal } from './components/McpServerModal';
 import { SettingsPanel } from './components/SettingsPanel';
+import { VersionBadge } from './components/VersionBadge';
 import { useSettingsStore } from './stores/settingsStore';
 
 const tabs = [
@@ -137,9 +138,18 @@ export const App = (): JSX.Element => {
       case 'files': toggleFileBrowser(); break;
       case 'commands': toggleCommandsPanel(); break;
       case 'terminal': createTerminalTab(); break;
-      case 'claude': toggleClaudePanel(); break;
-      case 'git': toggleGitPanel(); break;
-      case 'settings': toggleSettingsPanel(); break;
+      case 'claude':
+        if (!claudePanelOpen) { if (gitPanelOpen) toggleGitPanel(); if (settingsPanelOpen) toggleSettingsPanel(); }
+        toggleClaudePanel();
+        break;
+      case 'git':
+        if (!gitPanelOpen) { if (claudePanelOpen) toggleClaudePanel(); if (settingsPanelOpen) toggleSettingsPanel(); }
+        toggleGitPanel();
+        break;
+      case 'settings':
+        if (!settingsPanelOpen) { if (claudePanelOpen) toggleClaudePanel(); if (gitPanelOpen) toggleGitPanel(); }
+        toggleSettingsPanel();
+        break;
     }
   };
 
@@ -242,6 +252,7 @@ export const App = (): JSX.Element => {
       {quickOpenVisible && <QuickOpen onClose={() => setQuickOpenVisible(false)} />}
       <CommandVariablesModal />
       <McpServerModal />
+      <VersionBadge />
     </div>
   );
 };

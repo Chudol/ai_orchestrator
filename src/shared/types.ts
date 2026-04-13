@@ -150,6 +150,7 @@ export interface ElectronApi {
   renameSession: (sessionId: string, name: string) => Promise<void>;
   deleteSession: (sessionId: string) => Promise<void>;
   reorderSessions: (projectId: string, orderedIds: string[]) => Promise<void>;
+  restartSession: (sessionId: string, extraArgs: string) => Promise<string[]>;
   onSessionOutput: (callback: (sessionId: string, data: string) => void) => () => void;
   onSessionExit: (callback: (sessionId: string) => void) => () => void;
   onSessionStateUpdate: (callback: (sessionId: string, info: SessionStateInfo) => void) => () => void;

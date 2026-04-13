@@ -146,6 +146,7 @@ export const createPtySession = (
   cwd: string,
   sessionName: string = 'unnamed',
   claudeSessionId: string | null = null,
+  extraArgs: string | null = null,
 ): void => {
   if (DEBUG_PTY) {
     if (!fs.existsSync(debugLogDir)) {
@@ -153,9 +154,10 @@ export const createPtySession = (
     }
   }
   const shell = process.platform === 'win32' ? 'cmd.exe' : '/bin/zsh';
+  const suffix = extraArgs ? ` ${extraArgs}` : '';
   const claudeCmd = claudeSessionId
-    ? `claude --resume ${claudeSessionId} || claude`
-    : 'claude';
+    ? `claude --resume ${claudeSessionId}${suffix} || claude${suffix}`
+    : `claude${suffix}`;
   const shellArgs = process.platform === 'win32' ? ['/c', claudeCmd] : ['-l', '-c', claudeCmd];
   const ptyProcess = pty.spawn(shell, shellArgs, {
     name: 'xterm-256color',
@@ -373,6 +375,22 @@ export const respawnSession = (
     createPtySession(sessionId, cwd, sessionName, claudeSessionId);
     updateSessionStatus(sessionId, 'running');
   }
+};
+
+export const restartSession = (
+  sessionId: string,
+  cwd: string,
+  sessionName: string = 'unnamed',
+  claudeSessionId: string | null = null,
+  extraArgs: string | null = null,
+): void => {
+  if (activeSessions.has(sessionId)) {
+    const managed = activeSessions.get(sessionId)!;
+    managed.ptyProcess.kill();
+    activeSessions.delete(sessionId);
+  }
+  createPtySession(sessionId, cwd, sessionName, claudeSessionId, extraArgs);
+  updateSessionStatus(sessionId, 'running');
 };
 
 export const cleanupAllSessions = (): void => {

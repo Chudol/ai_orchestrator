@@ -1,6 +1,6 @@
 {
   "name": "orchestrator",
-  "version": "0.1.0",
+  "version": "0.0.2",
   "description": "Electron app for managing multiple Claude Code sessions",
   "main": "./out/main/index.js",
   "scripts": {

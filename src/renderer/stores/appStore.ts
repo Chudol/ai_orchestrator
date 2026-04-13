@@ -19,6 +19,7 @@ interface AppState {
   setActiveSession: (sessionId: string | null) => Promise<void>;
   renameSession: (sessionId: string, name: string) => Promise<void>;
   reorderSessions: (projectId: string, orderedIds: string[]) => Promise<void>;
+  restartSession: (sessionId: string, extraArgs: string) => Promise<void>;
   updateSessionStatus: (sessionId: string, status: Session['status']) => void;
   sessionStates: Map<string, SessionStateInfo>;
   unreadSessions: Set<string>;
@@ -284,6 +285,22 @@ export const useAppStore = create<AppState>((set, get) => ({
     const remaining = list.filter((s) => !orderedIds.includes(s.id));
     updated.set(projectId, [...sorted, ...remaining]);
     set({ sessions: updated });
+  },
+
+  restartSession: async (sessionId, extraArgs) => {
+    await window.api.restartSession(sessionId, extraArgs);
+    const { sessions, activeSessionId } = get();
+    const updated = new Map(sessions);
+    for (const [projectId, list] of updated) {
+      updated.set(
+        projectId,
+        list.map((s) => (s.id === sessionId ? { ...s, status: 'running' as const } : s)),
+      );
+    }
+    set({ sessions: updated });
+    if (activeSessionId === sessionId) {
+      await get().setActiveSession(sessionId);
+    }
   },
 
   trackRepo: async (dirPath) => {

@@ -50,6 +50,7 @@ import {
   detachSession,
   sendInput,
   respawnSession,
+  restartSession,
   isSessionRunning,
   deleteSessionLogs,
 } from './sessions';
@@ -161,6 +162,23 @@ export const registerIpcHandlers = (): void => {
       deleteSessionLogs(sessionId);
       stopSession(sessionId);
       removeSessionStore(sessionId);
+    },
+  );
+
+  ipcMain.handle(
+    IPC_CHANNELS.SESSIONS_RESTART,
+    (event: IpcMainInvokeEvent, sessionId: string, extraArgs: string) => {
+      const allProjects = getProjects();
+      const allSessions = allProjects.flatMap((p) =>
+        getSessionsByProject(p.id).map((s) => ({ ...s, projectPath: p.path })),
+      );
+      const sessionInfo = allSessions.find((s) => s.id === sessionId);
+      if (!sessionInfo) {
+        throw new Error(`Session ${sessionId} not found`);
+      }
+      restartSession(sessionId, sessionInfo.projectPath, sessionInfo.name, sessionInfo.claudeSessionId || null, extraArgs || null);
+      const windowId = event.sender.id;
+      return attachSession(sessionId, windowId);
     },
   );
 
