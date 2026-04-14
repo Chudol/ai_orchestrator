@@ -6,6 +6,14 @@ Format based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## [Unreleased]
 
+### Fixed
+- Web: add build-time cache busting (`?v=<hash>`) to screenshot images so updated assets are never served stale
+
+### Changed
+- Web download buttons now directly download latest DMG from GitHub releases
+- Release script cleans release dir before build, uploads DMG with stable name (Solmeron-arm64.dmg) and patched latest-mac.yml for auto-updater
+- Build step moved from package.json release script into release.sh
+
 ## [0.0.4] - 2026-04-13
 
 ### Added

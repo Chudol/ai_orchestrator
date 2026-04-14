@@ -1,3 +1,5 @@
+const v = `?v=${__BUILD_HASH__}`
+
 export interface Feature {
   id: string
   title: string
@@ -14,7 +16,7 @@ export const features: Feature[] = [
     subtitle: 'Your AI pair programmers, all in one view',
     description:
       'Run multiple Claude Code instances across different projects simultaneously. See real-time status for each session \u2014 Working, Thinking, Idle, or Needs Approval \u2014 with a project sidebar that keeps everything organized.',
-    image: './assets/main.png',
+    image: `./assets/main.png${v}`,
     highlights: [
       'Multiple concurrent Claude sessions',
       'Real-time session status indicators',
@@ -28,7 +30,7 @@ export const features: Feature[] = [
     subtitle: 'Custom commands and split terminal panes',
     description:
       'Define global and project-level commands, then execute them with one click or drag-and-drop. Split terminal panes let you monitor API servers, watch builds, and run tests \u2014 all while Claude works above.',
-    image: './assets/terminal.png',
+    image: `./assets/terminal.png${v}`,
     highlights: [
       'Global & project-scoped commands',
       'Split terminal panes',
@@ -42,7 +44,7 @@ export const features: Feature[] = [
     subtitle: 'Skills, agents, and MCP servers at a glance',
     description:
       'View and manage your Claude setup directly from Solmeron. Browse project and global skills, configure AI agents with different models, and manage MCP server connections \u2014 all with the ability to open and edit config files in place.',
-    image: './assets/claude.png',
+    image: `./assets/claude.png${v}`,
     highlights: [
       'Project & global skills overview',
       'Agent config with model selection',
@@ -56,7 +58,7 @@ export const features: Feature[] = [
     subtitle: 'Multi-repo git operations without leaving the app',
     description:
       'Track multiple git repositories within a single project \u2014 including nested repos discovered via right-click in the file browser. Search and checkout branches, check status, fetch, and pull from a clean, unified UI.',
-    image: './assets/git.png',
+    image: `./assets/git.png${v}`,
     highlights: [
       'Multiple repositories per project',
       'Branch search & one-click checkout',

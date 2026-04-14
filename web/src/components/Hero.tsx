@@ -1,6 +1,8 @@
 import { motion, useScroll, useTransform } from 'framer-motion'
 import { useRef } from 'react'
 
+const heroImage = `./assets/main.png?v=${__BUILD_HASH__}`
+
 interface Props {
   onImageClick: (src: string) => void
 }
@@ -81,10 +83,10 @@ export default function Hero({ onImageClick }: Props) {
       >
         <div
           className="rounded-xl overflow-hidden border border-gray-700/50 shadow-2xl shadow-blue-500/10 cursor-pointer"
-          onClick={() => onImageClick('./assets/main.png')}
+          onClick={() => onImageClick(heroImage)}
         >
           <img
-            src="./assets/main.png"
+            src={heroImage}
             alt="Solmeron - Main view with Claude Code session"
             className="w-full block"
             loading="eager"
