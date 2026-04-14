@@ -12,7 +12,7 @@
     "demo": "DEMO_MODE=1 electron-vite dev",
     "package": "dotenv -- electron-builder --config electron-builder.yml",
     "prod": "electron-vite build && dotenv -- electron-builder --config electron-builder.yml",
-    "release": "pnpm prod && bash scripts/release.sh"
+    "release": "bash scripts/release.sh"
   },
   "dependencies": {
     "@monaco-editor/react": "^4.7.0",
