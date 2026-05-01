@@ -6,6 +6,8 @@ Format based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## [Unreleased]
 
+## [0.0.5] - 2026-05-01
+
 ### Added
 - Git checkout now shows remote (origin) branches alongside local branches with visual separation
 - Git fetch now refreshes the branch list automatically so new remote branches appear immediately

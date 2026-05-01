@@ -23,6 +23,28 @@ export interface MajorChange {
 
 export const PATCH_NOTES: PatchNoteEntry[] = [
   {
+    version: '0.0.5',
+    title: 'Git Workflow & Terminal Control',
+    date: '2026-05-01',
+    major: [
+      {
+        title: 'Smarter Git Checkout',
+        description:
+          'Checking out branches just got easier — see and switch to remote branches without leaving the app.',
+        details: [
+          'Remote (origin) branches now appear in the checkout list alongside local ones.',
+          'Fetching automatically refreshes the branch list so new branches show up instantly.',
+        ],
+      },
+      {
+        title: 'Auto-Scroll Toggle in Terminal',
+        description:
+          'A new toggle in the terminal lets you pause auto-scrolling when Claude is producing output, so you can read earlier messages without the view jumping.',
+      },
+    ],
+    minor: [],
+  },
+  {
     version: '0.0.4',
     title: 'Patch Notes & Polish',
     date: '2026-04-13',
