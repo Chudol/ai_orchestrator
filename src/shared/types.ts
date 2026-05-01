@@ -27,6 +27,11 @@ export interface GitStatusResult {
   untracked: number;
 }
 
+export interface GitBranchesResult {
+  local: string[];
+  remote: string[];
+}
+
 export interface GitFetchResult {
   success: boolean;
   error?: string;
@@ -186,7 +191,7 @@ export interface ElectronApi {
   getTrackedRepoPaths: (projectId: string) => Promise<string[]>;
   getGitBranch: (dirPath: string) => Promise<string | null>;
   getGitStatus: (dirPath: string) => Promise<GitStatusResult>;
-  getGitBranches: (dirPath: string) => Promise<string[]>;
+  getGitBranches: (dirPath: string) => Promise<GitBranchesResult>;
   gitCheckout: (dirPath: string, branch: string) => Promise<void>;
   gitFetch: (dirPath: string) => Promise<GitFetchResult>;
   gitPull: (dirPath: string) => Promise<GitPullResult>;

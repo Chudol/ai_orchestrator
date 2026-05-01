@@ -2,7 +2,7 @@ import { useEffect, useRef, useState, useCallback } from 'react';
 import { Terminal } from '@xterm/xterm';
 import { FitAddon } from '@xterm/addon-fit';
 import '@xterm/xterm/css/xterm.css';
-import { TrackedRepoInfo, GitStatusResult } from '@shared/types';
+import { TrackedRepoInfo, GitStatusResult, GitBranchesResult } from '@shared/types';
 import { useAppStore, useActiveTrackedRepos } from '../stores/appStore';
 
 interface RepoRowProps {
@@ -12,7 +12,7 @@ interface RepoRowProps {
 const RepoRow = ({ repo }: RepoRowProps): JSX.Element => {
   const [status, setStatus] = useState<GitStatusResult | null>(null);
   const [statusLoading, setStatusLoading] = useState(false);
-  const [branches, setBranches] = useState<string[] | null>(null);
+  const [branches, setBranches] = useState<GitBranchesResult | null>(null);
   const [branchesOpen, setBranchesOpen] = useState(false);
   const refreshBranches = useAppStore((s) => s.refreshTrackedRepoBranches);
 
@@ -98,7 +98,7 @@ const RepoRow = ({ repo }: RepoRowProps): JSX.Element => {
       </div>
       {branchesOpen && branches && (
         <div className="branch-dropdown absolute left-0 top-full mt-1 glass rounded-lg shadow-xl z-50 max-h-48 overflow-y-auto min-w-[140px]">
-          {branches.map((b) => (
+          {branches.local.map((b) => (
             <button
               key={b}
               className={`block w-full text-left px-3 py-1.5 text-[10px] hover:bg-surface-2/50 transition-colors ${
@@ -109,6 +109,20 @@ const RepoRow = ({ repo }: RepoRowProps): JSX.Element => {
               {b === repo.branch ? `* ${b}` : b}
             </button>
           ))}
+          {branches.remote.length > 0 && (
+            <>
+              <div className="px-3 py-1 text-[9px] font-semibold text-txt-3 uppercase tracking-wider bg-surface-1/50 border-y border-border-subtle">Remote</div>
+              {branches.remote.map((b) => (
+                <button
+                  key={b}
+                  className="block w-full text-left px-3 py-1.5 text-[10px] hover:bg-surface-2/50 transition-colors text-txt-3"
+                  onClick={() => handleCheckout(b)}
+                >
+                  {b}
+                </button>
+              ))}
+            </>
+          )}
         </div>
       )}
     </div>
@@ -125,7 +139,14 @@ export const TerminalView = (): JSX.Element => {
   const refreshBranches = useAppStore((s) => s.refreshTrackedRepoBranches);
   const [reposVisible, setReposVisible] = useState(true);
   const [isDragOver, setIsDragOver] = useState(false);
+  const [autoScroll, setAutoScroll] = useState(true);
+  const autoScrollRef = useRef(true);
   const prevSessionIdRef = useRef<string | null>(null);
+
+  useEffect(() => {
+    autoScrollRef.current = autoScroll;
+    if (autoScroll) terminalRef.current?.scrollToBottom();
+  }, [autoScroll]);
 
   const handleDragOver = useCallback((e: React.DragEvent) => {
     if (e.dataTransfer.types.includes('Files') && activeSessionId) {
@@ -286,7 +307,7 @@ export const TerminalView = (): JSX.Element => {
       if (sessionId === activeSessionId && !cancelled) {
         const isNearBottom = terminal.buffer.active.baseY + terminal.rows >= terminal.buffer.active.length - 5;
         terminal.write(data);
-        if (isNearBottom) {
+        if (isNearBottom && autoScrollRef.current) {
           terminal.scrollToBottom();
         }
       }
@@ -338,6 +359,18 @@ export const TerminalView = (): JSX.Element => {
                 </svg>
               </button>
             )}
+            <button
+              className={`glass px-1.5 py-0.5 rounded transition-colors ${
+                autoScroll ? 'text-accent-blue hover:text-accent-blue/80' : 'text-txt-3 hover:text-txt-2'
+              }`}
+              onClick={() => setAutoScroll((v) => !v)}
+              title={autoScroll ? 'Auto-scroll ON (click to disable)' : 'Auto-scroll OFF (click to enable)'}
+            >
+              <svg width="8" height="8" viewBox="0 0 10 10">
+                <path d="M5 1v6M2 5l3 3 3-3" stroke="currentColor" strokeWidth="1.5" fill="none" strokeLinecap="round" strokeLinejoin="round" />
+                {!autoScroll && <line x1="1" y1="1" x2="9" y2="9" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />}
+              </svg>
+            </button>
             <div className="glass select-all px-2 py-0.5 rounded-md text-txt-3">
               {claudeId ?? 'detecting...'}
             </div>

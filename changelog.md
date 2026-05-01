@@ -6,6 +6,11 @@ Format based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## [Unreleased]
 
+### Added
+- Git checkout now shows remote (origin) branches alongside local branches with visual separation
+- Git fetch now refreshes the branch list automatically so new remote branches appear immediately
+- Toggle button in terminal view to enable/disable auto-scroll to bottom when Claude produces new output
+
 ### Fixed
 - Web: add build-time cache busting (`?v=<hash>`) to screenshot images so updated assets are never served stale
 

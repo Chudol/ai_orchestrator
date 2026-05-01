@@ -254,16 +254,28 @@ export const registerIpcHandlers = (): void => {
 
   ipcMain.handle(
     IPC_CHANNELS.GIT_BRANCHES,
-    async (_event: IpcMainInvokeEvent, dirPath: string): Promise<string[]> => {
+    async (_event: IpcMainInvokeEvent, dirPath: string): Promise<{ local: string[]; remote: string[] }> => {
       try {
-        const { stdout } = await execFileAsync('git', ['branch', '--format=%(refname:short)'], {
+        const { stdout } = await execFileAsync('git', ['branch', '-a', '--format=%(refname:short)'], {
           cwd: dirPath,
           encoding: 'utf-8',
           timeout: 5000,
         });
-        return stdout.trim().split('\n').filter(Boolean);
+        const all = stdout.trim().split('\n').filter(Boolean);
+        const local: string[] = [];
+        const remote: string[] = [];
+        for (const b of all) {
+          if (b.startsWith('origin/')) {
+            if (b !== 'origin/HEAD') {
+              remote.push(b);
+            }
+          } else {
+            local.push(b);
+          }
+        }
+        return { local, remote };
       } catch {
-        return [];
+        return { local: [], remote: [] };
       }
     },
   );

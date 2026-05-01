@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback } from 'react';
 import { useAppStore, useActiveTrackedRepos } from '../stores/appStore';
-import { TrackedRepoInfo, GitStatusResult } from '@shared/types';
+import { TrackedRepoInfo, GitStatusResult, GitBranchesResult } from '@shared/types';
 
 interface RepoCardProps {
   repo: TrackedRepoInfo;
@@ -10,7 +10,7 @@ interface RepoCardProps {
 const RepoCard = ({ repo, onBranchChanged }: RepoCardProps): JSX.Element => {
   const [status, setStatus] = useState<GitStatusResult | null>(null);
   const [statusLoading, setStatusLoading] = useState(false);
-  const [branches, setBranches] = useState<string[]>([]);
+  const [branches, setBranches] = useState<GitBranchesResult>({ local: [], remote: [] });
   const [branchesOpen, setBranchesOpen] = useState(false);
   const [fetchLoading, setFetchLoading] = useState(false);
   const [fetchResult, setFetchResult] = useState<string | null>(null);
@@ -37,6 +37,9 @@ const RepoCard = ({ repo, onBranchChanged }: RepoCardProps): JSX.Element => {
     try {
       const result = await window.api.gitFetch(repo.path);
       setFetchResult(result.success ? 'Fetched' : result.error ?? 'Failed');
+      if (result.success) {
+        onBranchChanged();
+      }
       setTimeout(() => setFetchResult(null), 4000);
     } catch {
       setFetchResult('Failed');
@@ -71,8 +74,8 @@ const RepoCard = ({ repo, onBranchChanged }: RepoCardProps): JSX.Element => {
       setBranchesOpen(false);
       return;
     }
-    const list = await window.api.getGitBranches(repo.path);
-    setBranches(list);
+    const result = await window.api.getGitBranches(repo.path);
+    setBranches(result);
     setBranchSearch('');
     setBranchesOpen(true);
   };
@@ -154,9 +157,14 @@ const RepoCard = ({ repo, onBranchChanged }: RepoCardProps): JSX.Element => {
 
       {/* Branch list */}
       {branchesOpen && (() => {
-        const filtered = branchSearch
-          ? branches.filter((b) => b.toLowerCase().includes(branchSearch.toLowerCase()))
-          : branches;
+        const search = branchSearch.toLowerCase();
+        const filteredLocal = search
+          ? branches.local.filter((b) => b.toLowerCase().includes(search))
+          : branches.local;
+        const filteredRemote = search
+          ? branches.remote.filter((b) => b.toLowerCase().includes(search))
+          : branches.remote;
+        const hasResults = filteredLocal.length > 0 || filteredRemote.length > 0;
         return (
           <div className="mt-4 glass rounded-xl overflow-hidden">
             <div className="p-2.5 border-b border-border-subtle">
@@ -173,24 +181,46 @@ const RepoCard = ({ repo, onBranchChanged }: RepoCardProps): JSX.Element => {
               {checkoutLoading && (
                 <div className="px-4 py-2.5 text-xs text-txt-3 animate-pulse">Switching branch...</div>
               )}
-              {filtered.map((b) => (
-                <button
-                  key={b}
-                  className={`block w-full text-left px-4 py-2 text-xs hover:bg-surface-2/50 transition-colors ${
-                    b === repo.branch ? 'text-accent-blue font-medium' : 'text-txt-2 hover:text-txt-1'
-                  }`}
-                  onClick={() => handleCheckout(b)}
-                  disabled={checkoutLoading}
-                >
-                  {b === repo.branch && (
-                    <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" className="inline mr-1.5 -mt-0.5">
-                      <polyline points="20 6 9 17 4 12" />
-                    </svg>
+              {filteredLocal.length > 0 && (
+                <>
+                  {filteredRemote.length > 0 && (
+                    <div className="px-4 py-1.5 text-[10px] font-semibold text-txt-3 uppercase tracking-wider bg-surface-1/50 border-b border-border-subtle">Local</div>
                   )}
-                  {b}
-                </button>
-              ))}
-              {filtered.length === 0 && (
+                  {filteredLocal.map((b) => (
+                    <button
+                      key={b}
+                      className={`block w-full text-left px-4 py-2 text-xs hover:bg-surface-2/50 transition-colors ${
+                        b === repo.branch ? 'text-accent-blue font-medium' : 'text-txt-2 hover:text-txt-1'
+                      }`}
+                      onClick={() => handleCheckout(b)}
+                      disabled={checkoutLoading}
+                    >
+                      {b === repo.branch && (
+                        <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" className="inline mr-1.5 -mt-0.5">
+                          <polyline points="20 6 9 17 4 12" />
+                        </svg>
+                      )}
+                      {b}
+                    </button>
+                  ))}
+                </>
+              )}
+              {filteredRemote.length > 0 && (
+                <>
+                  <div className="px-4 py-1.5 text-[10px] font-semibold text-txt-3 uppercase tracking-wider bg-surface-1/50 border-b border-border-subtle">Remote</div>
+                  {filteredRemote.map((b) => (
+                    <button
+                      key={b}
+                      className={`block w-full text-left px-4 py-2 text-xs hover:bg-surface-2/50 transition-colors text-txt-3 hover:text-txt-1`}
+                      onClick={() => handleCheckout(b)}
+                      disabled={checkoutLoading}
+                    >
+                      {b}
+                    </button>
+                  ))}
+                </>
+              )}
+              {!hasResults && (
                 <div className="px-4 py-3 text-xs text-txt-3 text-center">No branches found</div>
               )}
             </div>
