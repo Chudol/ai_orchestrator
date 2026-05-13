@@ -6,6 +6,14 @@ Format based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## [Unreleased]
 
+## [0.0.6] - 2026-05-13
+
+### Fixed
+- Terminal rendering corruption (text overdrawing, prompt jumping mid-screen) caused by PTY size desync — xterm fit now propagates cols/rows to the PTY via new `sessions:resize` IPC, and a ResizeObserver re-fits when the terminal container changes size (sidebar toggle, window resize)
+
+### Changed
+- PTY default size raised from 120×30 to 200×60 so initial Claude Code render is safe before the first resize roundtrip
+
 ## [0.0.5] - 2026-05-01
 
 ### Added

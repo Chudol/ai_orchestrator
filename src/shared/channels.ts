@@ -12,6 +12,7 @@ export const IPC_CHANNELS = {
   SESSIONS_DELETE: 'sessions:delete',
   SESSIONS_REORDER: 'sessions:reorder',
   SESSIONS_RESTART: 'sessions:restart',
+  SESSIONS_RESIZE: 'sessions:resize',
   PROJECTS_TRACK_REPO: 'projects:track-repo',
   PROJECTS_UNTRACK_REPO: 'projects:untrack-repo',
   PROJECTS_TRACKED_PATHS: 'projects:tracked-paths',

@@ -161,8 +161,8 @@ export const createPtySession = (
   const shellArgs = process.platform === 'win32' ? ['/c', claudeCmd] : ['-l', '-c', claudeCmd];
   const ptyProcess = pty.spawn(shell, shellArgs, {
     name: 'xterm-256color',
-    cols: 120,
-    rows: 30,
+    cols: 200,
+    rows: 60,
     cwd,
     env: {
       ...process.env as Record<string, string>,
@@ -362,6 +362,15 @@ export const sendInput = (sessionId: string, data: string): void => {
   if (managed) {
     managed.ptyProcess.write(data);
   }
+};
+
+export const resizePtySession = (sessionId: string, cols: number, rows: number): void => {
+  const managed = activeSessions.get(sessionId);
+  if (!managed) return;
+  if (!Number.isFinite(cols) || !Number.isFinite(rows) || cols < 1 || rows < 1) return;
+  try {
+    managed.ptyProcess.resize(Math.floor(cols), Math.floor(rows));
+  } catch { /* ignore — pty may have just exited */ }
 };
 
 export const isSessionRunning = (sessionId: string): boolean => {

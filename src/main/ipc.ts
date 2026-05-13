@@ -53,6 +53,7 @@ import {
   restartSession,
   isSessionRunning,
   deleteSessionLogs,
+  resizePtySession,
 } from './sessions';
 import {
   createTerminal,
@@ -179,6 +180,13 @@ export const registerIpcHandlers = (): void => {
       restartSession(sessionId, sessionInfo.projectPath, sessionInfo.name, sessionInfo.claudeSessionId || null, extraArgs || null);
       const windowId = event.sender.id;
       return attachSession(sessionId, windowId);
+    },
+  );
+
+  ipcMain.handle(
+    IPC_CHANNELS.SESSIONS_RESIZE,
+    (_event: IpcMainInvokeEvent, sessionId: string, cols: number, rows: number) => {
+      resizePtySession(sessionId, cols, rows);
     },
   );
 

@@ -215,7 +215,11 @@ export const TerminalView = (): JSX.Element => {
 
     if (containerRef.current) {
       terminal.open(containerRef.current);
-      requestAnimationFrame(() => fitAddon.fit());
+      requestAnimationFrame(() => {
+        fitAddon.fit();
+        const sid = prevSessionIdRef.current;
+        if (sid) window.api.resizeSession(sid, terminal.cols, terminal.rows);
+      });
     }
 
     let customKeyHandled = false;
@@ -252,12 +256,30 @@ export const TerminalView = (): JSX.Element => {
     });
 
     const handleResize = (): void => {
-      fitAddon.fit();
+      try {
+        fitAddon.fit();
+      } catch { /* container may be hidden/zero-sized */ }
+      const sid = prevSessionIdRef.current;
+      if (sid) window.api.resizeSession(sid, terminal.cols, terminal.rows);
     };
     window.addEventListener('resize', handleResize);
 
+    let resizeObserver: ResizeObserver | null = null;
+    if (containerRef.current && typeof ResizeObserver !== 'undefined') {
+      let rafId: number | null = null;
+      resizeObserver = new ResizeObserver(() => {
+        if (rafId !== null) cancelAnimationFrame(rafId);
+        rafId = requestAnimationFrame(() => {
+          rafId = null;
+          handleResize();
+        });
+      });
+      resizeObserver.observe(containerRef.current);
+    }
+
     return () => {
       window.removeEventListener('resize', handleResize);
+      resizeObserver?.disconnect();
       terminal.dispose();
       terminalRef.current = null;
       fitAddonRef.current = null;
@@ -292,7 +314,8 @@ export const TerminalView = (): JSX.Element => {
       for (const chunk of buffer) {
         terminal.write(chunk);
       }
-      fitAddonRef.current?.fit();
+      try { fitAddonRef.current?.fit(); } catch { /* hidden container */ }
+      window.api.resizeSession(activeSessionId, terminal.cols, terminal.rows);
       terminal.scrollToBottom();
       requestAnimationFrame(() => {
         terminal.scrollToBottom();

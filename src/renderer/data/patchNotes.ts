@@ -23,6 +23,23 @@ export interface MajorChange {
 
 export const PATCH_NOTES: PatchNoteEntry[] = [
   {
+    version: '0.0.6',
+    title: 'Steady Terminal',
+    date: '2026-05-13',
+    major: [
+      {
+        title: 'No More Terminal Glitches',
+        description:
+          'Fixed the issue where the terminal would start drawing over itself or the prompt would jump halfway up the screen after a long Claude Code session.',
+        details: [
+          'The terminal now stays in sync with the window size, including when you toggle the sidebar or resize the panel.',
+          'Newly started sessions render cleanly from the very first frame.',
+        ],
+      },
+    ],
+    minor: [],
+  },
+  {
     version: '0.0.5',
     title: 'Git Workflow & Terminal Control',
     date: '2026-05-01',
