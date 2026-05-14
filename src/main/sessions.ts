@@ -97,6 +97,8 @@ interface ManagedSession {
   lastDetectedClaudeId: string;
 }
 
+const OSC_777_NOTIFY_REGEX = /\x1b\]777;notify;Claude Code;([^\x07\x1b]+)/g;
+
 const activeSessions = new Map<string, ManagedSession>();
 
 const stripAnsi = (str: string): string => {
@@ -206,6 +208,31 @@ export const createPtySession = (
       managed.buffer.splice(0, managed.buffer.length - MAX_BUFFER_LINES);
     }
 
+    // OSC 777 notify is the authoritative lifecycle signal in newer Claude Code versions
+    // (Claude Code stopped emitting ": ready"/": done"/": working" OSC 0 titles around
+    // early May 2026 — only spinner titles remain, so 777 is the only "done" signal).
+    // Parse first so its state wins over residual spinner OSC 0 titles emitted right after.
+    const notifyMatches = [...processed.matchAll(OSC_777_NOTIFY_REGEX)];
+    if (notifyMatches.length > 0) {
+      const lastNotify = notifyMatches[notifyMatches.length - 1][1];
+      let notifyState: SessionInternalState | null = null;
+      if (lastNotify.includes('waiting for your input')) {
+        notifyState = 'idle';
+        managed.doneAt = Date.now();
+      } else if (
+        lastNotify.includes('needs your permission') ||
+        lastNotify.includes('needs your approval') ||
+        lastNotify.includes('needs your attention')
+      ) {
+        notifyState = 'waiting_for_approval';
+      }
+      if (notifyState && notifyState !== managed.currentState) {
+        managed.currentState = notifyState;
+        managed.stateSince = Date.now();
+        broadcastState(sessionId, { state: notifyState, since: managed.stateSince });
+      }
+    }
+
     // Extract window title from OSC sequences: \x1b]0;title\x07 or \x1b]0;title\x1b\\
     const titleMatches = processed.match(/\x1b\]0;([^\x07\x1b]*)/g);
     if (titleMatches) {
@@ -213,8 +240,9 @@ export const createPtySession = (
       managed.windowTitle = lastTitle;
       let newState = detectStateFromTitle(lastTitle);
 
-      // After "done" or "ready", suppress spinner-based "thinking"
-      // Claude Code sends residual spinner titles after finishing
+      // After "done" or "ready" (older Claude) OR OSC 777 idle (newer Claude),
+      // suppress spinner-based "thinking" for a few seconds. Log analysis shows real
+      // new activity always arrives >30s after idle, so 5s is a safe window.
       if (lastTitle.includes(': done') || lastTitle.includes(': ready')) {
         managed.doneAt = Date.now();
       }

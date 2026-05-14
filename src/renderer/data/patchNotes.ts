@@ -23,6 +23,23 @@ export interface MajorChange {
 
 export const PATCH_NOTES: PatchNoteEntry[] = [
   {
+    version: '0.0.7',
+    title: 'Session Status, Restored',
+    date: '2026-05-14',
+    major: [
+      {
+        title: 'No More "Thinking Forever"',
+        description:
+          'Fixed sessions getting stuck on "Thinking" even after Claude was clearly done. The status now correctly switches to idle when Claude is waiting for your input.',
+        details: [
+          'Permission and approval prompts are also detected reliably and shown as their own state.',
+          'Works with the latest Claude Code update that changed how sessions report their status.',
+        ],
+      },
+    ],
+    minor: [],
+  },
+  {
     version: '0.0.6',
     title: 'Steady Terminal',
     date: '2026-05-13',

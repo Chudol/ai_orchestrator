@@ -6,6 +6,11 @@ Format based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## [Unreleased]
 
+## [0.0.7] - 2026-05-14
+
+### Fixed
+- Sessions permanently stuck in "Thinking" state — newer Claude Code versions (post early-May 2026) stopped emitting `: ready`/`: done`/`: working` OSC 0 titles and now use OSC 777 notifications (`Claude is waiting for your input`, `needs your permission`, `needs your approval`). Detector now parses OSC 777 as the authoritative idle/approval signal alongside the legacy spinner/title detection
+
 ## [0.0.6] - 2026-05-13
 
 ### Fixed
